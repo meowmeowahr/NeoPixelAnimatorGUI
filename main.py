@@ -66,6 +66,15 @@ class MainWindow(QMainWindow):
         self.control_layout = QHBoxLayout()
         self.control_widget.setLayout(self.control_layout)
 
+        self.control_top_bar = QHBoxLayout()
+        self.control_layout.addLayout(self.control_top_bar)
+
+        self.control_title = QLabel("NeoPixel Animator")
+        self.control_title.setObjectName("h2")
+        self.control_top_bar.addWidget(self.control_title)
+
+        self.control_top_bar.addStretch()
+
         self.show()
 
     def check_mqtt_connection(self):

@@ -3,6 +3,11 @@
     font-size: 28px;
 }
 
+#h2 {
+    font-family: Cabin;
+    font-size: 22px;
+}
+
 #h3 {
     font-family: Cabin;
     font-size: 18px;
