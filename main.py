@@ -67,6 +67,9 @@ class MainWindow(QMainWindow):
         elif self.client.state == mqtt.MqttClient.Connecting:
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+        elif self.client.state == mqtt.MqttClient.ConnectError:
+            self.connection_timer.start()
+            self.connection_attempts_label.setText(f"Connection Failed: {self.client.result_code}")
         else:
             self.client.connectToHost()
             self.connection_timer.start()

@@ -6,14 +6,17 @@ class MqttClient(QtCore.QObject):
     Disconnected = 0
     Connecting = 1
     Connected = 2
+    ConnectError = 3
 
     MQTT_3_1 = mqtt.MQTTv31
     MQTT_3_1_1 = mqtt.MQTTv311
 
     connected = QtCore.pyqtSignal()
     disconnected = QtCore.pyqtSignal()
+    connect_failed = QtCore.pyqtSignal()
 
     stateChanged = QtCore.pyqtSignal(int)
+    rcChanged = QtCore.pyqtSignal(int)
     hostnameChanged = QtCore.pyqtSignal(str)
     portChanged = QtCore.pyqtSignal(int)
     keepAliveChanged = QtCore.pyqtSignal(int)
@@ -32,6 +35,7 @@ class MqttClient(QtCore.QObject):
         self.m_protocolVersion = MqttClient.MQTT_3_1
 
         self.m_state = MqttClient.Disconnected
+        self.m_result_code = None
 
         self.m_client = mqtt.Client(clean_session=self.m_cleanSession,
                                     protocol=self.protocolVersion)
@@ -55,6 +59,21 @@ class MqttClient(QtCore.QObject):
     def state(self):
         return self.m_state
 
+
+    @QtCore.pyqtProperty(int, notify=rcChanged)
+    def result_code(self):
+        return self.m_result_code
+
+    @result_code.setter
+    def result_code(self, result_code):
+        if self.m_result_code == result_code:
+            return
+        self.m_result_code = result_code
+        self.rcChanged.emit(result_code)
+
+    @result_code.getter
+    def result_code(self):
+        return self.m_result_code
     @QtCore.pyqtProperty(str, notify=hostnameChanged)
     def hostname(self):
         return self.m_hostname
@@ -141,8 +160,12 @@ class MqttClient(QtCore.QObject):
         # print("on_message", mstr, obj, mqttc)
         self.messageSignal.emit(mstr)
 
-    def on_connect(self, *args):
-        # print("on_connect", args)
+    def on_connect(self, client, userdata, flags, rc):
+        if rc != 0:
+            self.state = MqttClient.ConnectError
+            self.m_result_code = rc
+            self.connect_failed.emit()
+            return
         self.state = MqttClient.Connected
         self.connected.emit()
 
