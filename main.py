@@ -13,6 +13,7 @@ BROKER_PORT = 1883
 client_id = f'publish-{random.randint(0, 1000)}'
 
 CONNECTION_WIDGET_INDEX = 0
+CONTROL_WIDGET_INDEX = 1
 
 
 class MainWindow(QMainWindow):
@@ -23,7 +24,7 @@ class MainWindow(QMainWindow):
         self.client.hostname = BROKER_ADDRESS
         self.client.port = BROKER_PORT
 
-        self.connection_attempts = 0
+        self.connection_attempts = 1
 
         self.setWindowTitle("NeoPixel Animator Client")
 
@@ -58,22 +59,35 @@ class MainWindow(QMainWindow):
         self.connection_timer.timeout.connect(self.check_mqtt_connection)
         self.connection_timer.start()
 
+        # Control
+        self.control_widget = QWidget()
+        self.root_widget.insertWidget(CONTROL_WIDGET_INDEX, self.control_widget)
+
+        self.control_layout = QHBoxLayout()
+        self.control_widget.setLayout(self.control_layout)
+
         self.show()
 
     def check_mqtt_connection(self):
-        self.connection_attempts += 1
         if self.client.state == mqtt.MqttClient.Connected:
-            self.connection_timer.stop()
+            self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
+            return
         elif self.client.state == mqtt.MqttClient.Connecting:
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.connection_attempts += 1
         elif self.client.state == mqtt.MqttClient.ConnectError:
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Failed: {self.client.result_code}")
+            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.connection_attempts += 1
         else:
             self.client.connectToHost()
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.connection_attempts += 1
 
 
 if __name__ == "__main__":
