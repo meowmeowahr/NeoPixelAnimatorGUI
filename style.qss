@@ -2,3 +2,8 @@
     font-family: Cabin;
     font-size: 28px;
 }
+
+#h3 {
+    font-family: Cabin;
+    font-size: 18px;
+}

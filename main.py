@@ -1,3 +1,4 @@
+import random
 import sys
 
 from PyQt6.QtWidgets import *
@@ -5,6 +6,11 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import qdarktheme
 
+import mqtt
+
+BROKER_ADDRESS = "pilight.lan"
+BROKER_PORT = 1883
+client_id = f'publish-{random.randint(0, 1000)}'
 
 CONNECTION_WIDGET_INDEX = 0
 
@@ -12,6 +18,13 @@ CONNECTION_WIDGET_INDEX = 0
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.client = mqtt.MqttClient()
+        self.client.hostname = BROKER_ADDRESS
+        self.client.port = BROKER_PORT
+
+        self.connection_attempts = 0
+
         self.setWindowTitle("NeoPixel Animator Client")
 
         self.root_widget = QStackedWidget()
@@ -20,6 +33,7 @@ class MainWindow(QMainWindow):
         self.connection_widget = QWidget()
         self.root_widget.insertWidget(CONNECTION_WIDGET_INDEX, self.connection_widget)
 
+        # Connection
         self.connection_layout = QVBoxLayout()
         self.connection_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_widget.setLayout(self.connection_layout)
@@ -34,7 +48,29 @@ class MainWindow(QMainWindow):
         self.connection_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_layout.addWidget(self.connection_label)
 
+        self.connection_attempts_label = QLabel(f"Connection Attempts: {self.connection_attempts}")
+        self.connection_attempts_label.setObjectName("h3")
+        self.connection_attempts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.connection_layout.addWidget(self.connection_attempts_label)
+
+        self.connection_timer = QTimer(self)
+        self.connection_timer.setInterval(1000)
+        self.connection_timer.timeout.connect(self.check_mqtt_connection)
+        self.connection_timer.start()
+
         self.show()
+
+    def check_mqtt_connection(self):
+        self.connection_attempts += 1
+        if self.client.state == mqtt.MqttClient.Connected:
+            self.connection_timer.stop()
+        elif self.client.state == mqtt.MqttClient.Connecting:
+            self.connection_timer.start()
+            self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+        else:
+            self.client.connectToHost()
+            self.connection_timer.start()
+            self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
 
 
 if __name__ == "__main__":
