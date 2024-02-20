@@ -119,7 +119,7 @@ class MqttClient(QtCore.QObject):
     @QtCore.pyqtSlot()
     def connectToHost(self):
         if self.m_hostname:
-            self.m_client.connect(self.m_hostname,
+            self.m_client.connect_async(self.m_hostname,
                                   port=self.port,
                                   keepalive=self.keepAlive)
 
