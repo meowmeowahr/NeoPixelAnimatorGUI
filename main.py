@@ -1,3 +1,5 @@
+import enum
+import json
 import random
 import sys
 
@@ -13,11 +15,19 @@ BROKER_ADDRESS = "pilight.lan"
 BROKER_PORT = 1883
 client_id = f'publish-{random.randint(0, 1000)}'
 
+DR_TOPIC = "MQTTAnimator/data_request"
+RDR_TOPIC = "MQTTAnimator/rdata_request"
 STATE_TOPIC = "MQTTAnimator/state"
 RSTATE_TOPIC = "MQTTAnimator/rstate"
 
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
+
+
+class PowerStates(enum.Enum):
+    OFF = 0
+    ON = 1
+    UNKNOWN = 2
 
 
 class MainWindow(QMainWindow):
@@ -35,7 +45,7 @@ class MainWindow(QMainWindow):
         self.connection_attempts = 1
 
         # Led State
-        self.led_powered = False
+        self.led_powered = PowerStates.UNKNOWN
 
         self.setWindowTitle("NeoPixel Animator Client")
 
@@ -88,7 +98,7 @@ class MainWindow(QMainWindow):
 
         self.control_power = QPushButton()
         self.control_power.setFlat(True)
-        self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+        self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
         self.control_power.setIconSize(QSize(48, 48))
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
@@ -96,7 +106,6 @@ class MainWindow(QMainWindow):
         self.show()
 
     def check_mqtt_connection(self):
-        print(self.client.m_client.is_connected())
         if self.client.state == mqtt.MqttClient.Connected:
             self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
             return
@@ -119,28 +128,41 @@ class MainWindow(QMainWindow):
 
     def on_client_connect(self):
         self.client.subscribe(RSTATE_TOPIC)
+        self.client.subscribe(RDR_TOPIC)
+        self.client.publish(DR_TOPIC, "request_type_full")
 
     def on_client_message(self, topic: str, payload: str):
         if topic == RSTATE_TOPIC:
             if payload == "ON":
-                self.led_powered = True
+                self.led_powered = PowerStates.ON
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
             else:
-                self.led_powered = False
+                self.led_powered = PowerStates.OFF
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
-            print(self.led_powered)
+        elif topic == RDR_TOPIC:
+            try:
+                data = json.loads(payload)
+            except json.JSONDecodeError:
+                # TODO: Handle this!
+                return
+
+            if "state" in data:
+                if data["state"] == "ON":
+                    self.led_powered = PowerStates.ON
+                    self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
+                else:
+                    self.led_powered = PowerStates.OFF
+                    self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
 
     def toggle_led_power(self):
-        if self.led_powered:
-            self.led_powered = None
+        if self.led_powered == PowerStates.ON:
+            self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(STATE_TOPIC, "OFF")
-            print("OFF")
-        else:
-            self.led_powered = None
+        elif self.led_powered == PowerStates.OFF:
+            self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(STATE_TOPIC, "ON")
-            print("ON")
 
 
 if __name__ == "__main__":
