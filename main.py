@@ -5,12 +5,16 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import qdarktheme
+import qtawesome as qta
 
 import mqtt
 
 BROKER_ADDRESS = "pilight.lan"
 BROKER_PORT = 1883
 client_id = f'publish-{random.randint(0, 1000)}'
+
+STATE_TOPIC = "MQTTAnimator/state"
+RSTATE_TOPIC = "MQTTAnimator/rstate"
 
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
@@ -20,11 +24,18 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # Mqtt Client
         self.client = mqtt.MqttClient()
         self.client.hostname = BROKER_ADDRESS
         self.client.port = BROKER_PORT
 
+        self.client.connected.connect(self.on_client_connect)
+        self.client.messageSignal.connect(self.on_client_message)
+
         self.connection_attempts = 1
+
+        # Led State
+        self.led_powered = False
 
         self.setWindowTitle("NeoPixel Animator Client")
 
@@ -75,9 +86,17 @@ class MainWindow(QMainWindow):
 
         self.control_top_bar.addStretch()
 
+        self.control_power = QPushButton()
+        self.control_power.setFlat(True)
+        self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+        self.control_power.setIconSize(QSize(48, 48))
+        self.control_power.clicked.connect(self.toggle_led_power)
+        self.control_top_bar.addWidget(self.control_power)
+
         self.show()
 
     def check_mqtt_connection(self):
+        print(self.client.m_client.is_connected())
         if self.client.state == mqtt.MqttClient.Connected:
             self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
             return
@@ -97,6 +116,31 @@ class MainWindow(QMainWindow):
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
             self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
+
+    def on_client_connect(self):
+        self.client.subscribe(RSTATE_TOPIC)
+
+    def on_client_message(self, topic: str, payload: str):
+        if topic == RSTATE_TOPIC:
+            if payload == "ON":
+                self.led_powered = True
+                self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
+            else:
+                self.led_powered = False
+                self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+            print(self.led_powered)
+
+    def toggle_led_power(self):
+        if self.led_powered:
+            self.led_powered = None
+            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.client.publish(STATE_TOPIC, "OFF")
+            print("OFF")
+        else:
+            self.led_powered = None
+            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.client.publish(STATE_TOPIC, "ON")
+            print("ON")
 
 
 if __name__ == "__main__":

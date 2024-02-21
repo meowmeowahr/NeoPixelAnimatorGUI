@@ -23,7 +23,7 @@ class MqttClient(QtCore.QObject):
     cleanSessionChanged = QtCore.pyqtSignal(bool)
     protocolVersionChanged = QtCore.pyqtSignal(int)
 
-    messageSignal = QtCore.pyqtSignal(str)
+    messageSignal = QtCore.pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         super(MqttClient, self).__init__(parent)
@@ -153,12 +153,16 @@ class MqttClient(QtCore.QObject):
         if self.state == MqttClient.Connected:
             self.m_client.subscribe(path)
 
+    def publish(self, path, payload):
+        if self.state == MqttClient.Connected:
+            self.m_client.publish(path, payload)
+
     #################################################################
     # callbacks
     def on_message(self, mqttc, obj, msg):
         mstr = msg.payload.decode("ascii")
         # print("on_message", mstr, obj, mqttc)
-        self.messageSignal.emit(mstr)
+        self.messageSignal.emit(msg.topic, mstr)
 
     def on_connect(self, client, userdata, flags, rc):
         if rc != 0:
