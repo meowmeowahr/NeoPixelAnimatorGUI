@@ -128,6 +128,16 @@ class MainWindow(QMainWindow):
         self.control_brightness_slider.valueChanged.connect(self.update_brightness)
         self.control_brightness_layout.addWidget(self.control_brightness_slider)
 
+        self.control_animatior_scroll = QScrollArea()
+        self.control_animatior_scroll.setWidgetResizable(True)
+        self.control_layout.addWidget(self.control_animatior_scroll)
+
+        self.control_animator_widget = QWidget()
+        self.control_animatior_scroll.setWidget(self.control_animator_widget)
+
+        self.control_animator_layout = QGridLayout()
+        self.control_animator_widget.setLayout(self.control_animator_layout)
+
         self.show()
 
     def check_mqtt_connection(self):
