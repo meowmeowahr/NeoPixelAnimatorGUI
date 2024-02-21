@@ -20,6 +20,7 @@ RDR_TOPIC = "MQTTAnimator/rdata_request"
 STATE_TOPIC = "MQTTAnimator/state"
 RSTATE_TOPIC = "MQTTAnimator/rstate"
 BRIGHT_TOPIC = "MQTTAnimator/brightness"
+RBRIGHT_TOPIC = "MQTTAnimator/rbrightness"
 
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
@@ -29,6 +30,7 @@ class PowerStates(enum.Enum):
     OFF = 0
     ON = 1
     UNKNOWN = 2
+
 
 class BrightnessStates(enum.Enum):
     KNOWN = 0
@@ -116,6 +118,11 @@ class MainWindow(QMainWindow):
         self.control_brightness_layout = QHBoxLayout()
         self.control_brightness_box.setLayout(self.control_brightness_layout)
 
+        self.control_brightness_warning = QLabel()
+        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
+        self.control_brightness_warning.setToolTip("Brightness data may be inaccurate")
+        self.control_brightness_layout.addWidget(self.control_brightness_warning)
+
         self.control_brightness_slider = QSlider(Qt.Orientation.Horizontal)
         self.control_brightness_slider.setRange(1, 255)
         self.control_brightness_slider.valueChanged.connect(self.update_brightness)
@@ -146,6 +153,7 @@ class MainWindow(QMainWindow):
 
     def on_client_connect(self):
         self.client.subscribe(RSTATE_TOPIC)
+        self.client.subscribe(RBRIGHT_TOPIC)
         self.client.subscribe(RDR_TOPIC)
         self.client.publish(DR_TOPIC, "request_type_full")
 
@@ -157,6 +165,12 @@ class MainWindow(QMainWindow):
             else:
                 self.led_powered = PowerStates.OFF
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+        if topic == RBRIGHT_TOPIC:
+            self.brightness_known = BrightnessStates.KNOWN
+            self.brightness_value = int(payload)
+            self.control_brightness_warning.setPixmap(
+                qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+
         elif topic == RDR_TOPIC:
             try:
                 data = json.loads(payload)
@@ -175,7 +189,7 @@ class MainWindow(QMainWindow):
             if "brightness" in data:
                 self.control_brightness_slider.setValue(data["brightness"])
                 self.brightness_known = BrightnessStates.KNOWN
-                self.control_brightness_slider.setEnabled(self.brightness_known == BrightnessStates.KNOWN)
+                self.control_brightness_warning.setPixmap(qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
@@ -189,6 +203,7 @@ class MainWindow(QMainWindow):
 
     def update_brightness(self):
         self.brightness_known = BrightnessStates.UNKNOWN
+        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
         self.client.publish(BRIGHT_TOPIC, self.control_brightness_slider.value())
 
 
