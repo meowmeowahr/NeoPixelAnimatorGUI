@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
         self.brightness_known = BrightnessStates.UNKNOWN
 
         self.setWindowTitle("NeoPixel Animator Client")
+        self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
 
         self.root_widget = QStackedWidget()
         self.setCentralWidget(self.root_widget)
