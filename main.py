@@ -138,6 +138,9 @@ class MainWindow(QMainWindow):
         self.control_animator_layout = QGridLayout()
         self.control_animator_widget.setLayout(self.control_animator_layout)
 
+        self.test = AnimationWidget()
+        self.control_animator_layout.addWidget(self.test, 0, 0)
+
         self.show()
 
     def check_mqtt_connection(self):
@@ -216,6 +219,24 @@ class MainWindow(QMainWindow):
         self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
         self.client.publish(BRIGHT_TOPIC, self.control_brightness_slider.value())
 
+
+class AnimationWidget(QFrame):
+    def __init__(self, title: str = "Animation"):
+        super().__init__()
+        self.setFrameShape(QFrame.Shape.Box)
+
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.icon = QLabel()
+        self.icon.setPixmap(qta.icon("mdi6.auto-fix",color="#FFEE58").pixmap(128, 128))
+        self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.layout.addWidget(self.icon)
+
+        self.title = QLabel(title)
+        self.title.setObjectName("h3")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.layout.addWidget(self.title)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
