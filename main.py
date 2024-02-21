@@ -19,6 +19,7 @@ DR_TOPIC = "MQTTAnimator/data_request"
 RDR_TOPIC = "MQTTAnimator/rdata_request"
 STATE_TOPIC = "MQTTAnimator/state"
 RSTATE_TOPIC = "MQTTAnimator/rstate"
+BRIGHT_TOPIC = "MQTTAnimator/brightness"
 
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
@@ -28,6 +29,10 @@ class PowerStates(enum.Enum):
     OFF = 0
     ON = 1
     UNKNOWN = 2
+
+class BrightnessStates(enum.Enum):
+    KNOWN = 0
+    UNKNOWN = 1
 
 
 class MainWindow(QMainWindow):
@@ -46,6 +51,8 @@ class MainWindow(QMainWindow):
 
         # Led State
         self.led_powered = PowerStates.UNKNOWN
+        self.brightness_value = 0
+        self.brightness_known = BrightnessStates.UNKNOWN
 
         self.setWindowTitle("NeoPixel Animator Client")
 
@@ -84,7 +91,7 @@ class MainWindow(QMainWindow):
         self.control_widget = QWidget()
         self.root_widget.insertWidget(CONTROL_WIDGET_INDEX, self.control_widget)
 
-        self.control_layout = QHBoxLayout()
+        self.control_layout = QVBoxLayout()
         self.control_widget.setLayout(self.control_layout)
 
         self.control_top_bar = QHBoxLayout()
@@ -102,6 +109,17 @@ class MainWindow(QMainWindow):
         self.control_power.setIconSize(QSize(48, 48))
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
+
+        self.control_brightness_box = QGroupBox("Brightness")
+        self.control_layout.addWidget(self.control_brightness_box)
+
+        self.control_brightness_layout = QHBoxLayout()
+        self.control_brightness_box.setLayout(self.control_brightness_layout)
+
+        self.control_brightness_slider = QSlider(Qt.Orientation.Horizontal)
+        self.control_brightness_slider.setRange(1, 255)
+        self.control_brightness_slider.valueChanged.connect(self.update_brightness)
+        self.control_brightness_layout.addWidget(self.control_brightness_slider)
 
         self.show()
 
@@ -154,6 +172,11 @@ class MainWindow(QMainWindow):
                     self.led_powered = PowerStates.OFF
                     self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
 
+            if "brightness" in data:
+                self.control_brightness_slider.setValue(data["brightness"])
+                self.brightness_known = BrightnessStates.KNOWN
+                self.control_brightness_slider.setEnabled(self.brightness_known == BrightnessStates.KNOWN)
+
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
             self.led_powered = PowerStates.UNKNOWN
@@ -163,6 +186,10 @@ class MainWindow(QMainWindow):
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(STATE_TOPIC, "ON")
+
+    def update_brightness(self):
+        self.brightness_known = BrightnessStates.UNKNOWN
+        self.client.publish(BRIGHT_TOPIC, self.control_brightness_slider.value())
 
 
 if __name__ == "__main__":

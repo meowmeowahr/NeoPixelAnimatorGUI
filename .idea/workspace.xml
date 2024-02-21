@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="547c42f1-1398-4dfb-b9bb-28b6fb6ac2d4" name="Changes" comment="Initial power button">
+    <list default="true" id="547c42f1-1398-4dfb-b9bb-28b6fb6ac2d4" name="Changes" comment="Initial state management">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -99,7 +99,15 @@
       <option name="project" value="LOCAL" />
       <updated>1708490443411</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Initial state management">
+      <option name="closed" value="true" />
+      <created>1708491566893</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1708491566893</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -108,6 +116,7 @@
     <MESSAGE value="Add control title bar" />
     <MESSAGE value="Add LICENSE" />
     <MESSAGE value="Initial power button" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial power button" />
+    <MESSAGE value="Initial state management" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial state management" />
   </component>
 </project>
