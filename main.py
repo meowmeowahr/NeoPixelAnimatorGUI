@@ -1,4 +1,5 @@
 import enum
+import functools
 import json
 import random
 import sys
@@ -13,7 +14,7 @@ import mqtt
 
 BROKER_ADDRESS = "pilight.lan"
 BROKER_PORT = 1883
-client_id = f'publish-{random.randint(0, 1000)}'
+client_id = f'mqtt-animator-gui-{random.randint(0, 1000)}'
 
 DR_TOPIC = "MQTTAnimator/data_request"
 RDR_TOPIC = "MQTTAnimator/rdata_request"
@@ -21,6 +22,7 @@ STATE_TOPIC = "MQTTAnimator/state"
 RSTATE_TOPIC = "MQTTAnimator/rstate"
 BRIGHT_TOPIC = "MQTTAnimator/brightness"
 RBRIGHT_TOPIC = "MQTTAnimator/rbrightness"
+ANIM_TOPIC = "MQTTAnimator/animation"
 
 ANIMATION_LIST = {"Single Color": "SingleColor",
                   "Rainbow": "Rainbow",
@@ -157,6 +159,7 @@ class MainWindow(QMainWindow):
         self.control_animation_list = []
         for idx, key in enumerate(ANIMATION_LIST.keys()):
             widget = AnimationWidget(key)
+            widget.mousePressEvent = functools.partial(self.set_animation, key)
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
@@ -239,6 +242,8 @@ class MainWindow(QMainWindow):
         self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
         self.client.publish(BRIGHT_TOPIC, self.control_brightness_slider.value())
 
+    def set_animation(self, name: str, _) -> None:
+        self.client.publish(ANIM_TOPIC, ANIMATION_LIST[name])
 
 class AnimationWidget(QFrame):
     def __init__(self, title: str = "Animation"):
