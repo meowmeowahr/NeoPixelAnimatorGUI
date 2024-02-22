@@ -267,6 +267,7 @@ class AnimationWidget(QFrame):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    qta.dark(app)
 
     with open("style.qss", "r", encoding="utf-8") as qss:
         app.setStyleSheet(qdarktheme.load_stylesheet() + "\n" + qss.read())
