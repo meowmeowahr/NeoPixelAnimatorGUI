@@ -22,6 +22,19 @@ RSTATE_TOPIC = "MQTTAnimator/rstate"
 BRIGHT_TOPIC = "MQTTAnimator/brightness"
 RBRIGHT_TOPIC = "MQTTAnimator/rbrightness"
 
+ANIMATION_LIST = {"Single Color": "SingleColor",
+                  "Rainbow": "Rainbow",
+                  "Glitter Rainbow": "GlitterRainbow",
+                  "Colorloop": "Colorloop",
+                  "Magic": "Magic",
+                  "Fire": "Fire",
+                  "Colored Lights": "ColoredLights",
+                  "Fade": "Fade",
+                  "Flash": "Flash",
+                  "Wipe": "Wipe",
+                  "Random": "Random",
+                  "Random Color": "RandomColor"}
+
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
 
@@ -131,6 +144,8 @@ class MainWindow(QMainWindow):
 
         self.control_animatior_scroll = QScrollArea()
         self.control_animatior_scroll.setWidgetResizable(True)
+        self.control_animatior_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        QScroller.grabGesture(self.control_animatior_scroll, QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         self.control_layout.addWidget(self.control_animatior_scroll)
 
         self.control_animator_widget = QWidget()
@@ -139,8 +154,11 @@ class MainWindow(QMainWindow):
         self.control_animator_layout = QGridLayout()
         self.control_animator_widget.setLayout(self.control_animator_layout)
 
-        self.test = AnimationWidget()
-        self.control_animator_layout.addWidget(self.test, 0, 0)
+        self.control_animation_list = []
+        for idx, key in enumerate(ANIMATION_LIST.keys()):
+            widget = AnimationWidget(key)
+            self.control_animation_list.append(widget)
+            self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
         self.show()
 
@@ -203,7 +221,8 @@ class MainWindow(QMainWindow):
             if "brightness" in data:
                 self.control_brightness_slider.setValue(data["brightness"])
                 self.brightness_known = BrightnessStates.KNOWN
-                self.control_brightness_warning.setPixmap(qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+                self.control_brightness_warning.setPixmap(
+                    qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
@@ -225,12 +244,13 @@ class AnimationWidget(QFrame):
     def __init__(self, title: str = "Animation"):
         super().__init__()
         self.setFrameShape(QFrame.Shape.Box)
+        self.setMinimumWidth(160)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         self.icon = QLabel()
-        self.icon.setPixmap(qta.icon("mdi6.auto-fix",color="#FFEE58").pixmap(128, 128))
+        self.icon.setPixmap(qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
         self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.icon)
 
@@ -238,6 +258,7 @@ class AnimationWidget(QFrame):
         self.title.setObjectName("h3")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.title)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
