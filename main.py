@@ -3,6 +3,10 @@ import functools
 import json
 import random
 import sys
+import traceback
+import logging
+
+import yaml
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -12,17 +16,38 @@ import qtawesome as qta
 
 import mqtt
 
-BROKER_ADDRESS = "pilight.lan"
-BROKER_PORT = 1883
-client_id = f'mqtt-animator-gui-{random.randint(0, 1000)}'
+# Import yaml config
+with open("config.yaml", encoding="utf-8") as stream:
+    try:
+        configuration = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        traceback.print_exc()
+        logging.critical("YAML Parsing Error, %s", exc)
+        sys.exit(0)
 
-DR_TOPIC = "MQTTAnimator/data_request"
-RDR_TOPIC = "MQTTAnimator/rdata_request"
-STATE_TOPIC = "MQTTAnimator/state"
-RSTATE_TOPIC = "MQTTAnimator/rstate"
-BRIGHT_TOPIC = "MQTTAnimator/brightness"
-RBRIGHT_TOPIC = "MQTTAnimator/rbrightness"
-ANIM_TOPIC = "MQTTAnimator/animation"
+mqtt_config: dict = configuration.get("mqtt", {})
+mqtt_topics: dict = mqtt_config.get("topics", {})
+mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
+
+gui_config: dict = configuration.get("gui", {})
+
+mqtt_borker: str = mqtt_config.get("host", "localhost")
+mqtt_port: int = mqtt_config.get("port", 1883)
+client_id = f"mqtt-animator-{random.randint(0, 1000)}"
+
+data_request_topic: str = mqtt_topics.get("data_request_topic", "MQTTAnimator/data_request")
+state_topic: str = mqtt_topics.get("state_topic", "MQTTAnimator/state")
+brightness_topic: str = mqtt_topics.get("brightness_topic", "MQTTAnimator/brightness")
+args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
+animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
+
+data_request_return_topic: str = mqtt_topics.get("return_data_request_topic",
+                                                 "MQTTAnimator/rdata_request")
+state_return_topic: str = mqtt_topics.get("return_state_topic", "MQTTAnimator/rstate")
+brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
+                                               "MQTTAnimator/rbrightness")
+
+application_title: str = gui_config.get("title", "NeoPixel Animator")
 
 ANIMATION_LIST = {"Single Color": "SingleColor",
                   "Rainbow": "Rainbow",
@@ -58,8 +83,8 @@ class MainWindow(QMainWindow):
 
         # Mqtt Client
         self.client = mqtt.MqttClient()
-        self.client.hostname = BROKER_ADDRESS
-        self.client.port = BROKER_PORT
+        self.client.hostname = mqtt_borker
+        self.client.port = mqtt_port
 
         self.client.connected.connect(self.on_client_connect)
         self.client.messageSignal.connect(self.on_client_message)
@@ -115,7 +140,7 @@ class MainWindow(QMainWindow):
         self.control_top_bar = QHBoxLayout()
         self.control_layout.addLayout(self.control_top_bar)
 
-        self.control_title = QLabel("NeoPixel Animator")
+        self.control_title = QLabel(application_title)
         self.control_title.setObjectName("h2")
         self.control_top_bar.addWidget(self.control_title)
 
@@ -144,11 +169,14 @@ class MainWindow(QMainWindow):
         self.control_brightness_slider.valueChanged.connect(self.update_brightness)
         self.control_brightness_layout.addWidget(self.control_brightness_slider)
 
+        self.animation_layout = QHBoxLayout()
+        self.control_layout.addLayout(self.animation_layout)
+
         self.control_animatior_scroll = QScrollArea()
         self.control_animatior_scroll.setWidgetResizable(True)
         self.control_animatior_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         QScroller.grabGesture(self.control_animatior_scroll, QScroller.ScrollerGestureType.LeftMouseButtonGesture)
-        self.control_layout.addWidget(self.control_animatior_scroll)
+        self.animation_layout.addWidget(self.control_animatior_scroll)
 
         self.control_animator_widget = QWidget()
         self.control_animatior_scroll.setWidget(self.control_animator_widget)
@@ -162,6 +190,10 @@ class MainWindow(QMainWindow):
             widget.mousePressEvent = functools.partial(self.set_animation, key)
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
+
+        self.animation_sidebar_frame = QFrame()
+        self.animation_sidebar_frame.setFrameShape(QFrame.Shape.Box)
+        self.animation_layout.addWidget(self.animation_sidebar_frame)
 
         self.show()
 
@@ -187,26 +219,26 @@ class MainWindow(QMainWindow):
             self.connection_attempts += 1
 
     def on_client_connect(self):
-        self.client.subscribe(RSTATE_TOPIC)
-        self.client.subscribe(RBRIGHT_TOPIC)
-        self.client.subscribe(RDR_TOPIC)
-        self.client.publish(DR_TOPIC, "request_type_full")
+        self.client.subscribe(state_return_topic)
+        self.client.subscribe(brightness_return_topic)
+        self.client.subscribe(data_request_return_topic)
+        self.client.publish(data_request_topic, "request_type_full")
 
     def on_client_message(self, topic: str, payload: str):
-        if topic == RSTATE_TOPIC:
+        if topic == state_return_topic:
             if payload == "ON":
                 self.led_powered = PowerStates.ON
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
             else:
                 self.led_powered = PowerStates.OFF
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
-        if topic == RBRIGHT_TOPIC:
+        if topic == brightness_return_topic:
             self.brightness_known = BrightnessStates.KNOWN
             self.brightness_value = int(payload)
             self.control_brightness_warning.setPixmap(
                 qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
 
-        elif topic == RDR_TOPIC:
+        elif topic == data_request_return_topic:
             try:
                 data = json.loads(payload)
             except json.JSONDecodeError:
@@ -231,19 +263,20 @@ class MainWindow(QMainWindow):
         if self.led_powered == PowerStates.ON:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
-            self.client.publish(STATE_TOPIC, "OFF")
+            self.client.publish(state_topic, "OFF")
         elif self.led_powered == PowerStates.OFF:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
-            self.client.publish(STATE_TOPIC, "ON")
+            self.client.publish(state_topic, "ON")
 
     def update_brightness(self):
         self.brightness_known = BrightnessStates.UNKNOWN
         self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
-        self.client.publish(BRIGHT_TOPIC, self.control_brightness_slider.value())
+        self.client.publish(brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, name: str, _) -> None:
-        self.client.publish(ANIM_TOPIC, ANIMATION_LIST[name])
+        self.client.publish(animation_topic, ANIMATION_LIST[name])
+
 
 class AnimationWidget(QFrame):
     def __init__(self, title: str = "Animation"):

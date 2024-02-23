@@ -1,0 +1,15 @@
+mqtt:
+  host: "pilight.lan"
+  port: 1883
+  topics:
+    data_request_topic: "MQTTAnimator/data_request"
+    return_data_request_topic: "MQTTAnimator/rdata_request"
+    state_topic: "MQTTAnimator/state"
+    return_state_topic: "MQTTAnimator/rstate"
+    brightness_topic: "MQTTAnimator/brightness"
+    return_brightness_topic: "MQTTAnimator/rbrightness"
+    args_topic: "MQTTAnimator/args"
+    animation_topic: "MQTTAnimator/animation"
+
+gui:
+  title: "NeoPixel Animator"
