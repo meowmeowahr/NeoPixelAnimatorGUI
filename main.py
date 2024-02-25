@@ -200,6 +200,7 @@ class MainWindow(QMainWindow):
 
         self.animation_sidebar_frame = QFrame()
         self.animation_sidebar_frame.setFrameShape(QFrame.Shape.Box)
+        self.animation_sidebar_frame.setEnabled(False)
         self.animation_layout.addWidget(self.animation_sidebar_frame)
 
         self.animation_sidebar_layout = QVBoxLayout()
@@ -263,6 +264,7 @@ class MainWindow(QMainWindow):
         elif topic == anim_return_topic:
             if payload in list(ANIMATION_LIST.values()):
                 animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(payload)]
+                self.animation_sidebar_frame.setEnabled(True)
             else:
                 animation_name = "Unknown"
             self.current_animation.setText(f"Current Animation: {animation_name}")
@@ -285,6 +287,7 @@ class MainWindow(QMainWindow):
             if "animation" in data:
                 if data["animation"] in list(ANIMATION_LIST.values()):
                     animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(data["animation"])]
+                    self.animation_sidebar_frame.setEnabled(True)
                 else:
                     animation_name = "Unknown"
                 self.current_animation.setText(f"Current Animation: {animation_name}")
@@ -311,6 +314,7 @@ class MainWindow(QMainWindow):
         self.client.publish(brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, name: str, _) -> None:
+        self.animation_sidebar_frame.setEnabled(False)
         self.client.publish(animation_topic, ANIMATION_LIST[name])
 
 
