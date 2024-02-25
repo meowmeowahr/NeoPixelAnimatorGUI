@@ -12,3 +12,8 @@
     font-family: Cabin;
     font-size: 18px;
 }
+
+#h4 {
+    font-family: Cabin;
+    font-size: 14px;
+}

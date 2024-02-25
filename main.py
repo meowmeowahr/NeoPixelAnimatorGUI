@@ -171,7 +171,8 @@ class MainWindow(QMainWindow):
         self.control_brightness_layout.addWidget(self.control_brightness_slider)
 
         self.current_animation = QLabel("Current Animation: Unknown")
-        self.current_animation.setObjectName("current_animation")
+        self.current_animation.setObjectName("h4")
+        self.current_animation.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.control_layout.addWidget(self.current_animation)
 
         self.animation_layout = QHBoxLayout()
