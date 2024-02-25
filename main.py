@@ -255,6 +255,8 @@ class MainWindow(QMainWindow):
         self.about_right_layout = QVBoxLayout()
         self.about_side_by_side.addLayout(self.about_right_layout)
 
+        self.about_right_layout.addStretch()
+
         self.about_title = QLabel("NeoPixel Animation Client")
         self.about_title.setObjectName("h0")
         self.about_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -265,6 +267,7 @@ class MainWindow(QMainWindow):
         self.about_version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.about_right_layout.addWidget(self.about_version)
 
+        self.about_right_layout.addStretch()
 
         if app_fullscreen:
             self.showFullScreen()
