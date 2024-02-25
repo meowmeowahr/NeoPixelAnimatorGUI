@@ -10,6 +10,7 @@ mqtt:
     return_brightness_topic: "MQTTAnimator/rbrightness"
     args_topic: "MQTTAnimator/args"
     animation_topic: "MQTTAnimator/animation"
+    return_anim_topic: "MQTTAnimator/ranimation"
 
 gui:
   title: "NeoPixel Animator"

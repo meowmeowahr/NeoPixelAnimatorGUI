@@ -44,6 +44,7 @@ animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animatio
 data_request_return_topic: str = mqtt_topics.get("return_data_request_topic",
                                                  "MQTTAnimator/rdata_request")
 state_return_topic: str = mqtt_topics.get("return_state_topic", "MQTTAnimator/rstate")
+anim_return_topic: str = mqtt_topics.get("return_anim_topic", "MQTTAnimator/ranimation")
 brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
                                                "MQTTAnimator/rbrightness")
 
@@ -169,6 +170,10 @@ class MainWindow(QMainWindow):
         self.control_brightness_slider.valueChanged.connect(self.update_brightness)
         self.control_brightness_layout.addWidget(self.control_brightness_slider)
 
+        self.current_animation = QLabel("Current Animation: Unknown")
+        self.current_animation.setObjectName("current_animation")
+        self.control_layout.addWidget(self.current_animation)
+
         self.animation_layout = QHBoxLayout()
         self.control_layout.addLayout(self.animation_layout)
 
@@ -194,6 +199,16 @@ class MainWindow(QMainWindow):
         self.animation_sidebar_frame = QFrame()
         self.animation_sidebar_frame.setFrameShape(QFrame.Shape.Box)
         self.animation_layout.addWidget(self.animation_sidebar_frame)
+
+        self.animation_sidebar_layout = QVBoxLayout()
+        self.animation_sidebar_frame.setLayout(self.animation_sidebar_layout)
+
+        self.animation_settings = QPushButton()
+        self.animation_settings.setIcon(qta.icon("mdi6.tune-vertical-variant"))
+        self.animation_settings.setIconSize(QSize(36, 36))
+        self.animation_settings.setFixedWidth(self.animation_settings.minimumSizeHint().height())
+        self.animation_settings.setFlat(True)
+        self.animation_sidebar_layout.addWidget(self.animation_settings)
 
         self.show()
 
@@ -221,6 +236,7 @@ class MainWindow(QMainWindow):
     def on_client_connect(self):
         self.client.subscribe(state_return_topic)
         self.client.subscribe(brightness_return_topic)
+        self.client.subscribe(anim_return_topic)
         self.client.subscribe(data_request_return_topic)
         self.client.publish(data_request_topic, "request_type_full")
 
@@ -232,11 +248,19 @@ class MainWindow(QMainWindow):
             else:
                 self.led_powered = PowerStates.OFF
                 self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
-        if topic == brightness_return_topic:
+
+        elif topic == brightness_return_topic:
             self.brightness_known = BrightnessStates.KNOWN
             self.brightness_value = int(payload)
             self.control_brightness_warning.setPixmap(
                 qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+
+        elif topic == anim_return_topic:
+            if payload in list(ANIMATION_LIST.values()):
+                animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(payload)]
+            else:
+                animation_name = "Unknown"
+            self.current_animation.setText(f"Current Animation: {animation_name}")
 
         elif topic == data_request_return_topic:
             try:
@@ -252,6 +276,13 @@ class MainWindow(QMainWindow):
                 else:
                     self.led_powered = PowerStates.OFF
                     self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+
+            if "animation" in data:
+                if data["animation"] in list(ANIMATION_LIST.values()):
+                    animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(data["animation"])]
+                else:
+                    animation_name = "Unknown"
+                self.current_animation.setText(f"Current Animation: {animation_name}")
 
             if "brightness" in data:
                 self.control_brightness_slider.setValue(data["brightness"])
