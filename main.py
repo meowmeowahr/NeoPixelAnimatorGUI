@@ -5,6 +5,7 @@ import random
 import sys
 import traceback
 import logging
+import platform
 
 import yaml
 
@@ -17,6 +18,11 @@ import qtawesome as qta
 import mqtt
 
 __version__ = "0.1.0"
+
+if platform.system() == "Windows":
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"meowmeowahr.npanimator.client.{__version__}")
+
 
 # Import yaml config
 with open("config.yaml", encoding="utf-8") as stream:
