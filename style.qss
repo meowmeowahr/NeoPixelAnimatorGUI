@@ -1,3 +1,7 @@
+* {
+    font-family: Cabin;
+}
+
 #h1 {
     font-family: Cabin;
     font-size: 28px;
