@@ -49,6 +49,7 @@ brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
                                                "MQTTAnimator/rbrightness")
 
 application_title: str = gui_config.get("title", "NeoPixel Animator")
+app_fullscreen: bool = gui_config.get("fullscreen", False)
 
 ANIMATION_LIST = {"Single Color": "SingleColor",
                   "Rainbow": "Rainbow",
@@ -211,7 +212,10 @@ class MainWindow(QMainWindow):
         self.animation_settings.setFlat(True)
         self.animation_sidebar_layout.addWidget(self.animation_settings)
 
-        self.show()
+        if app_fullscreen:
+            self.showFullScreen()
+        else:
+            self.show()
 
     def check_mqtt_connection(self):
         if self.client.state == mqtt.MqttClient.Connected:
