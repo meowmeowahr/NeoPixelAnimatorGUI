@@ -2,6 +2,11 @@
     font-family: Cabin;
 }
 
+#h0 {
+    font-family: Cabin;
+    font-size: 30px;
+}
+
 #h1 {
     font-family: Cabin;
     font-size: 28px;

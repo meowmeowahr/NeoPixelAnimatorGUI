@@ -16,6 +16,8 @@ import qtawesome as qta
 
 import mqtt
 
+__version__ = "0.1.0"
+
 # Import yaml config
 with open("config.yaml", encoding="utf-8") as stream:
     try:
@@ -66,6 +68,7 @@ ANIMATION_LIST = {"Single Color": "SingleColor",
 
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
+ABOUT_PAGE_INDEX = 2
 
 
 class PowerStates(enum.Enum):
@@ -155,6 +158,14 @@ class MainWindow(QMainWindow):
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
 
+        self.control_about = QPushButton()
+        self.control_about.setFlat(True)
+        self.control_about.setIcon(qta.icon("mdi6.information-slab-circle"))
+        self.control_about.setIconSize(QSize(24, 24))
+        self.control_about.clicked.connect(self.show_about)
+        self.control_about.setFixedWidth(self.control_about.minimumSizeHint().height())
+        self.control_top_bar.addWidget(self.control_about)
+
         self.control_brightness_box = QGroupBox("Brightness")
         self.control_layout.addWidget(self.control_brightness_box)
 
@@ -213,6 +224,48 @@ class MainWindow(QMainWindow):
         self.animation_settings.setFlat(True)
         self.animation_sidebar_layout.addWidget(self.animation_settings)
 
+        # About
+        self.about_widget = QWidget()
+        self.root_widget.insertWidget(ABOUT_PAGE_INDEX, self.about_widget)
+
+        self.about_layout = QVBoxLayout()
+        self.about_widget.setLayout(self.about_layout)
+
+        self.about_top_bar = QHBoxLayout()
+        self.about_layout.addLayout(self.about_top_bar)
+
+        self.about_back = QPushButton()
+        self.about_back.setFlat(True)
+        self.about_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
+        self.about_back.setIconSize(QSize(48, 48))
+        self.about_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX))
+        self.about_top_bar.addWidget(self.about_back)
+
+        self.about_top_bar.addStretch()
+
+        self.about_side_by_side = QHBoxLayout()
+        self.about_layout.addLayout(self.about_side_by_side)
+
+        self.about_icon = QLabel()
+        self.about_icon.setPixmap(QPixmap("assets/icons/icon-512.svg"))
+        self.about_icon.setScaledContents(True)
+        self.about_icon.setFixedSize(QSize(240, 240))
+        self.about_side_by_side.addWidget(self.about_icon)
+
+        self.about_right_layout = QVBoxLayout()
+        self.about_side_by_side.addLayout(self.about_right_layout)
+
+        self.about_title = QLabel("NeoPixel Animation Client")
+        self.about_title.setObjectName("h0")
+        self.about_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.about_right_layout.addWidget(self.about_title)
+
+        self.about_version = QLabel(__version__)
+        self.about_version.setObjectName("h1")
+        self.about_version.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.about_right_layout.addWidget(self.about_version)
+
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -220,7 +273,8 @@ class MainWindow(QMainWindow):
 
     def check_mqtt_connection(self):
         if self.client.state == mqtt.MqttClient.Connected:
-            self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
+            if self.root_widget.currentIndex() != ABOUT_PAGE_INDEX:
+                self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
             return
         elif self.client.state == mqtt.MqttClient.Connecting:
             self.connection_timer.start()
@@ -316,6 +370,9 @@ class MainWindow(QMainWindow):
     def set_animation(self, name: str, _) -> None:
         self.animation_sidebar_frame.setEnabled(False)
         self.client.publish(animation_topic, ANIMATION_LIST[name])
+
+    def show_about(self):
+        self.root_widget.setCurrentIndex(ABOUT_PAGE_INDEX)
 
 
 class AnimationWidget(QFrame):
