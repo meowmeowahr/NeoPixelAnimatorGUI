@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
 
         self.about_right_layout.addStretch()
 
-        self.about_title = QLabel("NeoPixel Animation Client")
+        self.about_title = QLabel("NeoPixel Animatior Client")
         self.about_title.setObjectName("h0")
         self.about_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.about_right_layout.addWidget(self.about_title)
