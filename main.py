@@ -75,6 +75,7 @@ ANIMATION_LIST = {"Single Color": "SingleColor",
 CONNECTION_WIDGET_INDEX = 0
 CONTROL_WIDGET_INDEX = 1
 ABOUT_PAGE_INDEX = 2
+ANIM_CONF_INDEX = 3
 
 
 class PowerStates(enum.Enum):
@@ -227,6 +228,7 @@ class MainWindow(QMainWindow):
         self.animation_settings.setIcon(qta.icon("mdi6.tune-vertical-variant"))
         self.animation_settings.setIconSize(QSize(36, 36))
         self.animation_settings.setFixedWidth(self.animation_settings.minimumSizeHint().height())
+        self.animation_settings.clicked.connect(self.anim_conf)
         self.animation_settings.setFlat(True)
         self.animation_sidebar_layout.addWidget(self.animation_settings)
 
@@ -246,6 +248,12 @@ class MainWindow(QMainWindow):
         self.about_back.setIconSize(QSize(48, 48))
         self.about_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX))
         self.about_top_bar.addWidget(self.about_back)
+
+        self.about_top_bar.addStretch()
+
+        self.about_top_title = QLabel("About")
+        self.about_top_title.setObjectName("h2")
+        self.about_top_bar.addWidget(self.about_top_title)
 
         self.about_top_bar.addStretch()
 
@@ -275,6 +283,31 @@ class MainWindow(QMainWindow):
 
         self.about_right_layout.addStretch()
 
+        # Animation Conf
+        self.anim_conf_widget = QWidget()
+        self.root_widget.insertWidget(ANIM_CONF_INDEX, self.anim_conf_widget)
+
+        self.anim_conf_layout = QVBoxLayout()
+        self.anim_conf_widget.setLayout(self.anim_conf_layout)
+
+        self.anim_conf_top_bar = QHBoxLayout()
+        self.anim_conf_layout.addLayout(self.anim_conf_top_bar)
+
+        self.anim_conf_back = QPushButton()
+        self.anim_conf_back.setFlat(True)
+        self.anim_conf_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
+        self.anim_conf_back.setIconSize(QSize(48, 48))
+        self.anim_conf_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX))
+        self.anim_conf_top_bar.addWidget(self.anim_conf_back)
+
+        self.anim_conf_top_bar.addStretch()
+
+        self.anim_conf_top_title = QLabel("Effect Settings")
+        self.anim_conf_top_title.setObjectName("h2")
+        self.anim_conf_top_bar.addWidget(self.anim_conf_top_title)
+
+        self.anim_conf_top_bar.addStretch()
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -282,7 +315,7 @@ class MainWindow(QMainWindow):
 
     def check_mqtt_connection(self):
         if self.client.state == mqtt.MqttClient.Connected:
-            if self.root_widget.currentIndex() != ABOUT_PAGE_INDEX:
+            if self.root_widget.currentIndex() not in [ABOUT_PAGE_INDEX, ANIM_CONF_INDEX]:
                 self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
             return
         elif self.client.state == mqtt.MqttClient.Connecting:
@@ -382,6 +415,9 @@ class MainWindow(QMainWindow):
 
     def show_about(self):
         self.root_widget.setCurrentIndex(ABOUT_PAGE_INDEX)
+
+    def anim_conf(self):
+        self.root_widget.setCurrentIndex(ANIM_CONF_INDEX)
 
 
 class AnimationWidget(QFrame):
