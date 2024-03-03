@@ -21,8 +21,8 @@ __version__ = "0.1.0"
 
 if platform.system() == "Windows":
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"meowmeowahr.npanimator.client.{__version__}")
 
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"meowmeowahr.npanimator.client.{__version__}")
 
 # Import yaml config
 with open("config.yaml", encoding="utf-8") as stream:
@@ -59,23 +59,54 @@ brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
 
-ANIMATION_LIST = {"Single Color": "SingleColor",
-                  "Rainbow": "Rainbow",
-                  "Glitter Rainbow": "GlitterRainbow",
-                  "Colorloop": "Colorloop",
-                  "Magic": "Magic",
-                  "Fire": "Fire",
-                  "Colored Lights": "ColoredLights",
-                  "Fade": "Fade",
-                  "Flash": "Flash",
-                  "Wipe": "Wipe",
-                  "Random": "Random",
-                  "Random Color": "RandomColor"}
+ANIMATION_LIST = {
+    "Single Color": "SingleColor",
+    "Rainbow": "Rainbow",
+    "Glitter Rainbow": "GlitterRainbow",
+    "Colorloop": "Colorloop",
+    "Magic": "Magic",
+    "Fire": "Fire",
+    "Colored Lights": "ColoredLights",
+    "Fade": "Fade",
+    "Flash": "Flash",
+    "Wipe": "Wipe",
+    "Random": "Random",
+    "Random Color": "RandomColor"
+}
 
-CONNECTION_WIDGET_INDEX = 0
-CONTROL_WIDGET_INDEX = 1
-ABOUT_PAGE_INDEX = 2
-ANIM_CONF_INDEX = 3
+M_CONNECTION_WIDGET_INDEX = 0
+M_CONTROL_WIDGET_INDEX = 1
+M_ABOUT_PAGE_INDEX = 2
+M_ANIM_CONF_INDEX = 3
+
+A_UNKNOWN_INDEX = 0
+A_SINGLE_COLOR_INDEX = 1
+A_RAINBOW_INDEX = 2
+A_GLITTER_RAINBOW_INDEX = 3
+A_COLORLOOP_INDEX = 4
+A_MAGIC_INDEX = 5
+A_FIRE_INDEX = 6
+A_COLORED_LIGHTS_INDEX = 7
+A_FADE_INDEX = 8
+A_FLASH_INDEX = 9
+A_WIPE_INDEX = 10
+A_RANDOM_INDEX = 11
+A_RANDOM_COLOR_INDEX = 12
+
+ANIMATION_CONF_INDEXES = {
+    "SingleColor": A_SINGLE_COLOR_INDEX,
+    "Rainbow": A_RAINBOW_INDEX,
+    "GlitterRainbow": A_GLITTER_RAINBOW_INDEX,
+    "Colorloop": A_COLORLOOP_INDEX,
+    "Magic": A_MAGIC_INDEX,
+    "Fire": A_FIRE_INDEX,
+    "ColoredLights": A_COLORED_LIGHTS_INDEX,
+    "Fade": A_FADE_INDEX,
+    "Flash": A_FLASH_INDEX,
+    "Wipe": A_WIPE_INDEX,
+    "Random": A_RANDOM_INDEX,
+    "RandomColor": A_RANDOM_COLOR_INDEX
+}
 
 
 class PowerStates(enum.Enum):
@@ -115,7 +146,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.root_widget)
 
         self.connection_widget = QWidget()
-        self.root_widget.insertWidget(CONNECTION_WIDGET_INDEX, self.connection_widget)
+        self.root_widget.insertWidget(M_CONNECTION_WIDGET_INDEX, self.connection_widget)
 
         # Connection
         self.connection_layout = QVBoxLayout()
@@ -144,7 +175,7 @@ class MainWindow(QMainWindow):
 
         # Control
         self.control_widget = QWidget()
-        self.root_widget.insertWidget(CONTROL_WIDGET_INDEX, self.control_widget)
+        self.root_widget.insertWidget(M_CONTROL_WIDGET_INDEX, self.control_widget)
 
         self.control_layout = QVBoxLayout()
         self.control_widget.setLayout(self.control_layout)
@@ -234,7 +265,7 @@ class MainWindow(QMainWindow):
 
         # About
         self.about_widget = QWidget()
-        self.root_widget.insertWidget(ABOUT_PAGE_INDEX, self.about_widget)
+        self.root_widget.insertWidget(M_ABOUT_PAGE_INDEX, self.about_widget)
 
         self.about_layout = QVBoxLayout()
         self.about_widget.setLayout(self.about_layout)
@@ -246,7 +277,7 @@ class MainWindow(QMainWindow):
         self.about_back.setFlat(True)
         self.about_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
         self.about_back.setIconSize(QSize(48, 48))
-        self.about_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX))
+        self.about_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
         self.about_top_bar.addWidget(self.about_back)
 
         self.about_top_bar.addStretch()
@@ -285,7 +316,7 @@ class MainWindow(QMainWindow):
 
         # Animation Conf
         self.anim_conf_widget = QWidget()
-        self.root_widget.insertWidget(ANIM_CONF_INDEX, self.anim_conf_widget)
+        self.root_widget.insertWidget(M_ANIM_CONF_INDEX, self.anim_conf_widget)
 
         self.anim_conf_layout = QVBoxLayout()
         self.anim_conf_widget.setLayout(self.anim_conf_layout)
@@ -297,7 +328,7 @@ class MainWindow(QMainWindow):
         self.anim_conf_back.setFlat(True)
         self.anim_conf_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
         self.anim_conf_back.setIconSize(QSize(48, 48))
-        self.anim_conf_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX))
+        self.anim_conf_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
         self.anim_conf_top_bar.addWidget(self.anim_conf_back)
 
         self.anim_conf_top_bar.addStretch()
@@ -308,6 +339,9 @@ class MainWindow(QMainWindow):
 
         self.anim_conf_top_bar.addStretch()
 
+        self.anim_config_stack = QStackedWidget()
+        self.anim_conf_layout.addWidget(self.anim_config_stack)
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -315,24 +349,24 @@ class MainWindow(QMainWindow):
 
     def check_mqtt_connection(self):
         if self.client.state == mqtt.MqttClient.Connected:
-            if self.root_widget.currentIndex() not in [ABOUT_PAGE_INDEX, ANIM_CONF_INDEX]:
-                self.root_widget.setCurrentIndex(CONTROL_WIDGET_INDEX)
+            if self.root_widget.currentIndex() not in [M_ABOUT_PAGE_INDEX, M_ANIM_CONF_INDEX]:
+                self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
             return
         elif self.client.state == mqtt.MqttClient.Connecting:
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
-            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
         elif self.client.state == mqtt.MqttClient.ConnectError:
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Failed: {self.client.result_code}")
-            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
         else:
             self.client.connectToHost()
             self.connection_timer.start()
             self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
-            self.root_widget.setCurrentIndex(CONNECTION_WIDGET_INDEX)
+            self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
 
     def on_client_connect(self):
@@ -361,6 +395,7 @@ class MainWindow(QMainWindow):
             if payload in list(ANIMATION_LIST.values()):
                 animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(payload)]
                 self.animation_sidebar_frame.setEnabled(True)
+                self.update_animation_page(payload)
             else:
                 animation_name = "Unknown"
             self.current_animation.setText(f"Current Animation: {animation_name}")
@@ -384,6 +419,7 @@ class MainWindow(QMainWindow):
                 if data["animation"] in list(ANIMATION_LIST.values()):
                     animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(data["animation"])]
                     self.animation_sidebar_frame.setEnabled(True)
+                    self.update_animation_page(data["animation"])
                 else:
                     animation_name = "Unknown"
                 self.current_animation.setText(f"Current Animation: {animation_name}")
@@ -414,10 +450,16 @@ class MainWindow(QMainWindow):
         self.client.publish(animation_topic, ANIMATION_LIST[name])
 
     def show_about(self):
-        self.root_widget.setCurrentIndex(ABOUT_PAGE_INDEX)
+        self.root_widget.setCurrentIndex(M_ABOUT_PAGE_INDEX)
 
     def anim_conf(self):
-        self.root_widget.setCurrentIndex(ANIM_CONF_INDEX)
+        self.root_widget.setCurrentIndex(M_ANIM_CONF_INDEX)
+
+    def update_animation_page(self, animation: str) -> None:
+        if animation in ANIMATION_CONF_INDEXES.keys():
+            self.anim_config_stack.setCurrentIndex(ANIMATION_CONF_INDEXES[animation])
+        else:
+            self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
 
 
 class AnimationWidget(QFrame):
