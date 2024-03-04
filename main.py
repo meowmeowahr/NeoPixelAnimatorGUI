@@ -15,6 +15,8 @@ from PyQt6.QtGui import *
 import qdarktheme
 import qtawesome as qta
 
+import palette
+
 import animation_data
 import mqtt
 
@@ -120,6 +122,8 @@ class BrightnessStates(enum.Enum):
     KNOWN = 0
     UNKNOWN = 1
 
+def hex_to_rgb(hexa):
+    return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -363,6 +367,16 @@ class MainWindow(QMainWindow):
         self.unknown_anim_layout.addWidget(self.unknown_anim_label)
 
         self.unknown_anim_layout.addStretch()
+
+        self.anim_single_color_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_SINGLE_COLOR_INDEX, self.anim_single_color_widget)
+
+        self.anim_single_color_layout = QHBoxLayout()
+        self.anim_single_color_widget.setLayout(self.anim_single_color_layout)
+
+        self.anim_single_color_palette = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_single_color_palette.selected.connect(lambda c: print(hex_to_rgb(c.lstrip("#"))))
+        self.anim_single_color_layout.addWidget(self.anim_single_color_palette)
 
         if app_fullscreen:
             self.showFullScreen()
