@@ -15,6 +15,7 @@ from PyQt6.QtGui import *
 import qdarktheme
 import qtawesome as qta
 
+import animation_data
 import mqtt
 
 __version__ = "0.1.0"
@@ -138,6 +139,7 @@ class MainWindow(QMainWindow):
         self.led_powered = PowerStates.UNKNOWN
         self.brightness_value = 0
         self.brightness_known = BrightnessStates.UNKNOWN
+        self.animation_args = animation_data.AnimationArgs()
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
@@ -342,6 +344,26 @@ class MainWindow(QMainWindow):
         self.anim_config_stack = QStackedWidget()
         self.anim_conf_layout.addWidget(self.anim_config_stack)
 
+        self.unknown_anim_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_UNKNOWN_INDEX, self.unknown_anim_widget)
+
+        self.unknown_anim_layout = QVBoxLayout()
+        self.unknown_anim_widget.setLayout(self.unknown_anim_layout)
+
+        self.unknown_anim_layout.addStretch()
+
+        self.unknown_anim_icon = QLabel()
+        self.unknown_anim_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.unknown_anim_icon.setPixmap(qta.icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128))
+        self.unknown_anim_layout.addWidget(self.unknown_anim_icon)
+
+        self.unknown_anim_label = QLabel("Animation Unknown")
+        self.unknown_anim_label.setObjectName("h1")
+        self.unknown_anim_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.unknown_anim_layout.addWidget(self.unknown_anim_label)
+
+        self.unknown_anim_layout.addStretch()
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -429,6 +451,10 @@ class MainWindow(QMainWindow):
                 self.brightness_known = BrightnessStates.KNOWN
                 self.control_brightness_warning.setPixmap(
                     qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+
+            if "args" in data:
+                self.animation_args = animation_data.AnimationArgs(**json.loads(data["args"]))
+                print(self.animation_args)
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
