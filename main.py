@@ -129,6 +129,7 @@ class BrightnessStates(enum.Enum):
 def hex_to_rgb(hexa):
     return tuple(int(hexa[i:i + 2], 16) for i in (0, 2, 4))
 
+
 def dict_to_dataclass(data_dict, dataclass_type):
     # Recursively convert nested dictionaries to dataclasses
     for field in dataclasses.fields(dataclass_type):
@@ -137,6 +138,22 @@ def dict_to_dataclass(data_dict, dataclass_type):
             data_dict[field_name] = dict_to_dataclass(data_dict[field_name], field.type)
 
     return dataclass_type(**data_dict)
+
+def map_range(x: float, in_min: float, in_max: float, out_min: float, out_max: float):
+    """Map bounds of input to bounds of output
+
+    Args:
+        x (int): Input value
+        in_min (int): Input lower bound
+        in_max (int): Input upper bound
+        out_min (int): Output lower bound
+        out_max (int): Output upper bound
+
+    Returns:
+        int: Output value
+    """
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -408,6 +425,51 @@ class MainWindow(QMainWindow):
 
         self.anim_single_color_right_layout.addStretch()
 
+        # Rainbow Conf
+        self.anim_config_stack.insertWidget(A_RAINBOW_INDEX, self.generate_animation_config_unavailabe())
+
+        # Glitter Rainbow Conf
+
+        self.anim_grainbow_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_GLITTER_RAINBOW_INDEX, self.anim_grainbow_widget)
+
+        self.anim_grainbow_layout = QVBoxLayout()
+        self.anim_grainbow_widget.setLayout(self.anim_grainbow_layout)
+
+        self.anim_grainbow_layout.addStretch()
+
+        self.anim_grainbow_ratio_label = QLabel("Glitter to Normal Ratio")
+        self.anim_grainbow_ratio_label.setObjectName("h3")
+        self.anim_grainbow_layout.addWidget(self.anim_grainbow_ratio_label)
+
+        self.anim_grainbow_ratio = QSlider(Qt.Orientation.Horizontal)
+        self.anim_grainbow_ratio.setRange(1, 50)
+        self.anim_grainbow_ratio.valueChanged.connect(
+            lambda: self.publish_and_update_args(
+                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value()/100}}}"
+            )
+        )
+        self.anim_grainbow_ratio.sliderReleased.connect(
+            lambda: self.publish_and_update_args(
+                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value() / 100}}}"
+            )
+        )
+        self.anim_grainbow_layout.addWidget(self.anim_grainbow_ratio)
+
+        self.anim_grainbow_layout.addStretch()
+
+        # Colorloop Conf
+        self.anim_config_stack.insertWidget(A_COLORLOOP_INDEX, self.generate_animation_config_unavailabe())
+
+        # Magic Conf
+        self.anim_config_stack.insertWidget(A_MAGIC_INDEX, self.generate_animation_config_unavailabe())
+
+        # Fire Conf
+        self.anim_config_stack.insertWidget(A_FIRE_INDEX, self.generate_animation_config_unavailabe())
+
+        # Colored Lights Conf
+        self.anim_config_stack.insertWidget(A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailabe())
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -499,6 +561,10 @@ class MainWindow(QMainWindow):
             if "args" in data:
                 self.animation_args = dict_to_dataclass(json.loads(data["args"]), animation_data.AnimationArgs)
                 self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
+                if not self.anim_grainbow_ratio.isSliderDown():
+                    self.anim_grainbow_ratio.blockSignals(True)
+                    self.anim_grainbow_ratio.setValue(round(self.animation_args.glitter_rainbow.glitter_ratio * 100))
+                    self.anim_grainbow_ratio.blockSignals(False)
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
@@ -534,6 +600,28 @@ class MainWindow(QMainWindow):
             self.anim_config_stack.setCurrentIndex(ANIMATION_CONF_INDEXES[animation])
         else:
             self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
+
+    def generate_animation_config_unavailabe(self) -> QWidget:
+        anim_widget = QWidget()
+
+        anim_layout = QVBoxLayout()
+        anim_widget.setLayout(anim_layout)
+
+        anim_layout.addStretch()
+
+        unknown_anim_icon = QLabel()
+        unknown_anim_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        unknown_anim_icon.setPixmap(qta.icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128))
+        anim_layout.addWidget(unknown_anim_icon)
+
+        anim_label = QLabel("This animation does not have any settings")
+        anim_label.setObjectName("h1")
+        anim_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        anim_layout.addWidget(anim_label)
+
+        anim_layout.addStretch()
+
+        return anim_widget
 
     def publish_and_update_args(self, topic, data):
         self.client.publish(topic, data)
