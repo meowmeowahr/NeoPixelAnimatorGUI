@@ -388,13 +388,20 @@ class MainWindow(QMainWindow):
         self.anim_single_color_widget.setLayout(self.anim_single_color_layout)
 
         self.anim_single_color_palette = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
-        self.anim_single_color_palette.selected.connect(lambda c: print(hex_to_rgb(c.lstrip("#"))))
+        self.anim_single_color_palette.selected.connect(
+            lambda c: self.publish_and_update_args(args_topic, f"single_color,{{\"color\": "
+                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+        )
         self.anim_single_color_layout.addWidget(self.anim_single_color_palette)
 
         self.anim_single_color_right_layout = QVBoxLayout()
         self.anim_single_color_layout.addLayout(self.anim_single_color_right_layout)
 
         self.anim_single_color_right_layout.addStretch()
+
+        self.anim_single_color_current_label = QLabel("Current")
+        self.anim_single_color_current_label.setObjectName("h2")
+        self.anim_single_color_right_layout.addWidget(self.anim_single_color_current_label)
 
         self.anim_single_color_current = widgets.ColorBlock()
         self.anim_single_color_right_layout.addWidget(self.anim_single_color_current)
@@ -491,7 +498,6 @@ class MainWindow(QMainWindow):
 
             if "args" in data:
                 self.animation_args = dict_to_dataclass(json.loads(data["args"]), animation_data.AnimationArgs)
-                # BIG TODO: Make the color update with real controls. do it with return for args
                 self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
 
     def toggle_led_power(self):
@@ -528,6 +534,10 @@ class MainWindow(QMainWindow):
             self.anim_config_stack.setCurrentIndex(ANIMATION_CONF_INDEXES[animation])
         else:
             self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
+
+    def publish_and_update_args(self, topic, data):
+        self.client.publish(topic, data)
+        self.client.publish(data_request_topic, "request_type_args")
 
 
 class AnimationWidget(QFrame):
