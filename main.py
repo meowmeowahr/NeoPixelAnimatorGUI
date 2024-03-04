@@ -439,6 +439,10 @@ class MainWindow(QMainWindow):
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(state_topic, "ON")
+        else:
+            self.led_powered = PowerStates.UNKNOWN
+            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.client.publish(state_topic, "OFF")
 
     def update_brightness(self):
         self.brightness_known = BrightnessStates.UNKNOWN
