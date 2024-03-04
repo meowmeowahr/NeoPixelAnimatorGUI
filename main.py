@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import functools
 import json
@@ -21,6 +22,8 @@ import animation_data
 import mqtt
 
 __version__ = "0.1.0"
+
+import widgets
 
 if platform.system() == "Windows":
     import ctypes
@@ -122,8 +125,18 @@ class BrightnessStates(enum.Enum):
     KNOWN = 0
     UNKNOWN = 1
 
+
 def hex_to_rgb(hexa):
-    return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
+    return tuple(int(hexa[i:i + 2], 16) for i in (0, 2, 4))
+
+def dict_to_dataclass(data_dict, dataclass_type):
+    # Recursively convert nested dictionaries to dataclasses
+    for field in dataclasses.fields(dataclass_type):
+        field_name = field.name
+        if hasattr(field.type, "__annotations__") and field_name in data_dict:
+            data_dict[field_name] = dict_to_dataclass(data_dict[field_name], field.type)
+
+    return dataclass_type(**data_dict)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -378,6 +391,16 @@ class MainWindow(QMainWindow):
         self.anim_single_color_palette.selected.connect(lambda c: print(hex_to_rgb(c.lstrip("#"))))
         self.anim_single_color_layout.addWidget(self.anim_single_color_palette)
 
+        self.anim_single_color_right_layout = QVBoxLayout()
+        self.anim_single_color_layout.addLayout(self.anim_single_color_right_layout)
+
+        self.anim_single_color_right_layout.addStretch()
+
+        self.anim_single_color_current = widgets.ColorBlock()
+        self.anim_single_color_right_layout.addWidget(self.anim_single_color_current)
+
+        self.anim_single_color_right_layout.addStretch()
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -467,8 +490,9 @@ class MainWindow(QMainWindow):
                     qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
 
             if "args" in data:
-                self.animation_args = animation_data.AnimationArgs(**json.loads(data["args"]))
-                print(self.animation_args)
+                self.animation_args = dict_to_dataclass(json.loads(data["args"]), animation_data.AnimationArgs)
+                # BIG TODO: Make the color update with real controls. do it with return for args
+                self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:

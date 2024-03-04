@@ -3,29 +3,6 @@ import functools
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import pyqtSignal as Signal
 
-
-BLACK = "#000000"
-RED = "#FF0000"
-GREEN = "#00FF00"
-BLUE = "#0000FF"
-WHITE = "#FFFFFF"
-CYAN = "#00FFFF"
-MAGENTA = "#FF00FF"
-YELLOW = "#FFFF00"
-CHARTREUSE = "#7FFF00"
-ORANGE = "#FF6000"
-AQUAMARINE = "#7FFFD4"
-PINK = "#FF5F5F"
-TURQUOISE = "#3FE0C0"
-INDIGO = "#3F007F"
-VIOLET = "#BF7FBF"
-MAROON = "#320010"
-BROWN = "#0E0600"
-CRIMSON = "#DC283C"
-PURPLE = "#8C00FF"
-DBLUE = "#0022FF"
-GRAY = "#555555"
-
 PALETTES = {
     # bokeh paired 12
     'paired12': ['#000000', '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00',
@@ -39,13 +16,13 @@ PALETTES = {
                      '#ffffff'],
     # Kevinbot v3
     'kevinbot': [
-    "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF",
-    "#FF9900", "#9900FF", "#00FF99", "#990000", "#009900", "#000099",
-    "#FFCC00", "#CC00FF", "#00FFCC", "#CC0000", "#00CC00", "#0000CC",
-    "#FF6600", "#6600FF", "#00FF66", "#660000", "#006600", "#000066",
-    "#FF3300", "#3300FF", "#00FF33", "#330000", "#003300", "#000033",
-    "#FF6666", "#6666FF", "#66FF66", "#666666", "#FFCC99"
-]
+        "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF",
+        "#FF9900", "#9900FF", "#00FF99", "#990000", "#009900", "#000099",
+        "#FFCC00", "#CC00FF", "#00FFCC", "#CC0000", "#00CC00", "#0000CC",
+        "#FF6600", "#6600FF", "#00FF66", "#660000", "#006600", "#000066",
+        "#FF3300", "#3300FF", "#00FF33", "#330000", "#003300", "#000033",
+        "#FF6666", "#6666FF", "#66FF66", "#666666", "#FFCC99"
+    ]
 }
 
 
