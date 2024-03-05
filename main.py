@@ -228,7 +228,7 @@ class MainWindow(QMainWindow):
         self.control_power = QPushButton()
         self.control_power.setFlat(True)
         self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
-        self.control_power.setIconSize(QSize(48, 48))
+        self.control_power.setIconSize(QSize(56, 56))
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
 
