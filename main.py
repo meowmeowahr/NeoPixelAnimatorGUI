@@ -10,9 +10,9 @@ import platform
 
 import yaml
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
 import qdarktheme
 import qtawesome as qta
 

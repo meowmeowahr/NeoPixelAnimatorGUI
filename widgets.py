@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame
+from qtpy.QtWidgets import QFrame
 
 
 def rgb_to_hex(rgb):

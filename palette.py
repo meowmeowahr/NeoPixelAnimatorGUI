@@ -1,7 +1,7 @@
 import functools
 
-from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import pyqtSignal as Signal
+from qtpy import QtCore, QtWidgets
+from qtpy.QtCore import Signal as Signal
 
 PALETTES = {
     # bokeh paired 12

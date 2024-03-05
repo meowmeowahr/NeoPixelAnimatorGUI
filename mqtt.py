@@ -1,4 +1,4 @@
-from PyQt6 import QtCore
+from qtpy import QtCore
 import paho.mqtt.client as mqtt
 
 
@@ -11,19 +11,19 @@ class MqttClient(QtCore.QObject):
     MQTT_3_1 = mqtt.MQTTv31
     MQTT_3_1_1 = mqtt.MQTTv311
 
-    connected = QtCore.pyqtSignal()
-    disconnected = QtCore.pyqtSignal()
-    connect_failed = QtCore.pyqtSignal()
+    connected = QtCore.Signal()
+    disconnected = QtCore.Signal()
+    connect_failed = QtCore.Signal()
 
-    stateChanged = QtCore.pyqtSignal(int)
-    rcChanged = QtCore.pyqtSignal(int)
-    hostnameChanged = QtCore.pyqtSignal(str)
-    portChanged = QtCore.pyqtSignal(int)
-    keepAliveChanged = QtCore.pyqtSignal(int)
-    cleanSessionChanged = QtCore.pyqtSignal(bool)
-    protocolVersionChanged = QtCore.pyqtSignal(int)
+    stateChanged = QtCore.Signal(int)
+    rcChanged = QtCore.Signal(int)
+    hostnameChanged = QtCore.Signal(str)
+    portChanged = QtCore.Signal(int)
+    keepAliveChanged = QtCore.Signal(int)
+    cleanSessionChanged = QtCore.Signal(bool)
+    protocolVersionChanged = QtCore.Signal(int)
 
-    messageSignal = QtCore.pyqtSignal(str, str)
+    messageSignal = QtCore.Signal(str, str)
 
     def __init__(self, parent=None):
         super(MqttClient, self).__init__(parent)
@@ -44,7 +44,7 @@ class MqttClient(QtCore.QObject):
         self.m_client.on_message = self.on_message
         self.m_client.on_disconnect = self.on_disconnect
 
-    @QtCore.pyqtProperty(int, notify=stateChanged)
+    @QtCore.Property(int, notify=stateChanged)
     def state(self):
         return self.m_state
 
@@ -59,8 +59,7 @@ class MqttClient(QtCore.QObject):
     def state(self):
         return self.m_state
 
-
-    @QtCore.pyqtProperty(int, notify=rcChanged)
+    @QtCore.Property(int, notify=rcChanged)
     def result_code(self):
         return self.m_result_code
 
@@ -74,7 +73,8 @@ class MqttClient(QtCore.QObject):
     @result_code.getter
     def result_code(self):
         return self.m_result_code
-    @QtCore.pyqtProperty(str, notify=hostnameChanged)
+
+    @QtCore.Property(str, notify=hostnameChanged)
     def hostname(self):
         return self.m_hostname
 
@@ -85,7 +85,7 @@ class MqttClient(QtCore.QObject):
         self.m_hostname = hostname
         self.hostnameChanged.emit(hostname)
 
-    @QtCore.pyqtProperty(int, notify=portChanged)
+    @QtCore.Property(int, notify=portChanged)
     def port(self):
         return self.m_port
 
@@ -96,7 +96,7 @@ class MqttClient(QtCore.QObject):
         self.m_port = port
         self.portChanged.emit(port)
 
-    @QtCore.pyqtProperty(int, notify=keepAliveChanged)
+    @QtCore.Property(int, notify=keepAliveChanged)
     def keepAlive(self):
         return self.m_keepAlive
 
@@ -107,7 +107,7 @@ class MqttClient(QtCore.QObject):
         self.m_keepAlive = keepAlive
         self.keepAliveChanged.emit(keepAlive)
 
-    @QtCore.pyqtProperty(bool, notify=cleanSessionChanged)
+    @QtCore.Property(bool, notify=cleanSessionChanged)
     def cleanSession(self):
         return self.m_cleanSession
 
@@ -118,7 +118,7 @@ class MqttClient(QtCore.QObject):
         self.m_cleanSession = cleanSession
         self.cleanSessionChanged.emit(cleanSession)
 
-    @QtCore.pyqtProperty(int, notify=protocolVersionChanged)
+    @QtCore.Property(int, notify=protocolVersionChanged)
     def protocolVersion(self):
         return self.m_protocolVersion
 
@@ -135,17 +135,17 @@ class MqttClient(QtCore.QObject):
         return self.m_protocolVersion
 
     #################################################################
-    @QtCore.pyqtSlot()
+    @QtCore.Slot()
     def connectToHost(self):
         if self.m_hostname:
             self.m_client.connect_async(self.m_hostname,
-                                  port=self.port,
-                                  keepalive=self.keepAlive)
+                                        port=self.port,
+                                        keepalive=self.keepAlive)
 
             self.state = MqttClient.Connecting
             self.m_client.loop_start()
 
-    @QtCore.pyqtSlot()
+    @QtCore.Slot()
     def disconnectFromHost(self):
         self.m_client.disconnect()
 
