@@ -470,6 +470,67 @@ class MainWindow(QMainWindow):
         # Colored Lights Conf
         self.anim_config_stack.insertWidget(A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailabe())
 
+        # Fade config
+        self.anim_fade_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_FADE_INDEX, self.anim_fade_widget)
+
+        self.anim_fade_layout = QHBoxLayout()
+        self.anim_fade_widget.setLayout(self.anim_fade_layout)
+
+        self.anim_fade_a_layout = QVBoxLayout()
+        self.anim_fade_layout.addLayout(self.anim_fade_a_layout)
+
+        self.anim_fade_palette_a = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_a.selected.connect(
+            lambda c: self.publish_and_update_args(args_topic, f"fade,{{\"colora\": "
+                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+        )
+        self.anim_fade_a_layout.addWidget(self.anim_fade_palette_a)
+
+        self.anim_fade_a_bottom_layout = QHBoxLayout()
+        self.anim_fade_a_layout.addLayout(self.anim_fade_a_bottom_layout)
+
+        self.anim_fade_a_bottom_layout.addStretch()
+
+        self.anim_fade_current_a_label = QLabel("Current")
+        self.anim_fade_current_a_label.setObjectName("h2")
+        self.anim_fade_a_bottom_layout.addWidget(self.anim_fade_current_a_label)
+
+        self.anim_fade_current_a = widgets.ColorBlock()
+        self.anim_fade_current_a.setFixedHeight(32)
+        self.anim_fade_a_bottom_layout.addWidget(self.anim_fade_current_a)
+
+        self.anim_fade_a_bottom_layout.addStretch()
+
+        self.anim_fade_divider = QFrame()
+        self.anim_fade_divider.setFrameShape(QFrame.Shape.VLine)
+        self.anim_fade_layout.addWidget(self.anim_fade_divider)
+
+        self.anim_fade_b_layout = QVBoxLayout()
+        self.anim_fade_layout.addLayout(self.anim_fade_b_layout)
+
+        self.anim_fade_palette_b = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_b.selected.connect(
+            lambda c: self.publish_and_update_args(args_topic, f"fade,{{\"colorb\": "
+                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+        )
+        self.anim_fade_b_layout.addWidget(self.anim_fade_palette_b)
+
+        self.anim_fade_b_bottom_layout = QHBoxLayout()
+        self.anim_fade_b_layout.addLayout(self.anim_fade_b_bottom_layout)
+
+        self.anim_fade_b_bottom_layout.addStretch()
+
+        self.anim_fade_current_b_label = QLabel("Current")
+        self.anim_fade_current_b_label.setObjectName("h2")
+        self.anim_fade_b_bottom_layout.addWidget(self.anim_fade_current_b_label)
+
+        self.anim_fade_current_b = widgets.ColorBlock()
+        self.anim_fade_current_b.setFixedHeight(32)
+        self.anim_fade_b_bottom_layout.addWidget(self.anim_fade_current_b)
+
+        self.anim_fade_b_bottom_layout.addStretch()
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -561,6 +622,8 @@ class MainWindow(QMainWindow):
             if "args" in data:
                 self.animation_args = dict_to_dataclass(json.loads(data["args"]), animation_data.AnimationArgs)
                 self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
+                self.anim_fade_current_a.setRGB(self.animation_args.fade.colora)
+                self.anim_fade_current_b.setRGB(self.animation_args.fade.colorb)
                 if not self.anim_grainbow_ratio.isSliderDown():
                     self.anim_grainbow_ratio.blockSignals(True)
                     self.anim_grainbow_ratio.setValue(round(self.animation_args.glitter_rainbow.glitter_ratio * 100))
