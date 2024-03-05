@@ -2,9 +2,14 @@
     font-family: Cabin;
 }
 
-.QSlider {
+.QSlider:horizontal {
     min-height: 68px;
     max-height: 68px;
+}
+
+.QSlider:vertical {
+    min-width: 68px;
+    max-width: 68px;
 }
 
 .QSlider::groove:horizontal {
@@ -16,6 +21,12 @@
     width: 80px;
     height: 80px;
     margin: -24px -12px;
+}
+
+.QSlider::handle:vertical {
+    width: 40px;
+    height: 60px;
+    margin: 0px -24px;
 }
 
 #h0 {

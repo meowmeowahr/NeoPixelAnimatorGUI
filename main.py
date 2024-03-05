@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
 
         self.animation_settings = QPushButton()
         self.animation_settings.setIcon(qta.icon("mdi6.tune-vertical-variant"))
-        self.animation_settings.setIconSize(QSize(36, 36))
+        self.animation_settings.setIconSize(QSize(42, 42))
         self.animation_settings.setFixedWidth(self.animation_settings.minimumSizeHint().height())
         self.animation_settings.clicked.connect(self.anim_conf)
         self.animation_settings.setFlat(True)
@@ -531,6 +531,79 @@ class MainWindow(QMainWindow):
 
         self.anim_fade_b_bottom_layout.addStretch()
 
+        # Flash config
+        self.anim_flash_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_FLASH_INDEX, self.anim_flash_widget)
+
+        self.anim_flash_layout = QHBoxLayout()
+        self.anim_flash_widget.setLayout(self.anim_flash_layout)
+
+        self.anim_flash_a_layout = QVBoxLayout()
+        self.anim_flash_layout.addLayout(self.anim_flash_a_layout)
+
+        self.anim_flash_palette_a = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_a.selected.connect(
+            lambda c: self.publish_and_update_args(args_topic, f"flash,{{\"colora\": "
+                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+        )
+        self.anim_flash_a_layout.addWidget(self.anim_flash_palette_a)
+
+        self.anim_flash_a_bottom_layout = QHBoxLayout()
+        self.anim_flash_a_layout.addLayout(self.anim_flash_a_bottom_layout)
+
+        self.anim_flash_a_bottom_layout.addStretch()
+
+        self.anim_flash_current_a_label = QLabel("Current")
+        self.anim_flash_current_a_label.setObjectName("h2")
+        self.anim_flash_a_bottom_layout.addWidget(self.anim_flash_current_a_label)
+
+        self.anim_flash_current_a = widgets.ColorBlock()
+        self.anim_flash_current_a.setFixedHeight(32)
+        self.anim_flash_a_bottom_layout.addWidget(self.anim_flash_current_a)
+
+        self.anim_flash_a_bottom_layout.addStretch()
+
+        self.anim_flash_divider = QFrame()
+        self.anim_flash_divider.setFrameShape(QFrame.Shape.VLine)
+        self.anim_flash_layout.addWidget(self.anim_flash_divider)
+
+        self.anim_flash_b_layout = QVBoxLayout()
+        self.anim_flash_layout.addLayout(self.anim_flash_b_layout)
+
+        self.anim_flash_palette_b = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_b.selected.connect(
+            lambda c: self.publish_and_update_args(args_topic, f"flash,{{\"colorb\": "
+                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+        )
+        self.anim_flash_b_layout.addWidget(self.anim_flash_palette_b)
+
+        self.anim_flash_b_bottom_layout = QHBoxLayout()
+        self.anim_flash_b_layout.addLayout(self.anim_flash_b_bottom_layout)
+
+        self.anim_flash_b_bottom_layout.addStretch()
+
+        self.anim_flash_current_b_label = QLabel("Current")
+        self.anim_flash_current_b_label.setObjectName("h2")
+        self.anim_flash_b_bottom_layout.addWidget(self.anim_flash_current_b_label)
+
+        self.anim_flash_current_b = widgets.ColorBlock()
+        self.anim_flash_current_b.setFixedHeight(32)
+        self.anim_flash_b_bottom_layout.addWidget(self.anim_flash_current_b)
+
+        self.anim_flash_b_bottom_layout.addStretch()
+
+        self.anim_flash_speed = QSlider()
+        self.anim_flash_speed.setRange(3, 50)
+        self.anim_flash_speed.valueChanged.connect(
+            lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
+                                                               f"{self.anim_flash_speed.value()}}}")
+        )
+        self.anim_flash_speed.sliderReleased.connect(
+            lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
+                                                               f"{self.anim_flash_speed.value()}}}")
+        )
+        self.anim_flash_layout.addWidget(self.anim_flash_speed)
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -624,10 +697,17 @@ class MainWindow(QMainWindow):
                 self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
                 self.anim_fade_current_a.setRGB(self.animation_args.fade.colora)
                 self.anim_fade_current_b.setRGB(self.animation_args.fade.colorb)
+                self.anim_flash_current_a.setRGB(self.animation_args.flash.colora)
+                self.anim_flash_current_b.setRGB(self.animation_args.flash.colorb)
                 if not self.anim_grainbow_ratio.isSliderDown():
                     self.anim_grainbow_ratio.blockSignals(True)
                     self.anim_grainbow_ratio.setValue(round(self.animation_args.glitter_rainbow.glitter_ratio * 100))
                     self.anim_grainbow_ratio.blockSignals(False)
+
+                if not self.anim_flash_speed.isSliderDown():
+                    self.anim_flash_speed.blockSignals(True)
+                    self.anim_flash_speed.setValue(self.animation_args.flash.speed)
+                    self.anim_flash_speed.blockSignals(False)
 
     def toggle_led_power(self):
         if self.led_powered == PowerStates.ON:
