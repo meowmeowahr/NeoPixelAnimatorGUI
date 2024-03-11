@@ -45,7 +45,7 @@ mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
 
 gui_config: dict = configuration.get("gui", {})
 
-mqtt_borker: str = mqtt_config.get("host", "localhost")
+mqtt_broker: str = mqtt_config.get("host", "localhost")
 mqtt_port: int = mqtt_config.get("port", 1883)
 client_id = f"mqtt-animator-{random.randint(0, 1000)}"
 
@@ -146,11 +146,12 @@ def dict_to_dataclass(data_dict, dataclass_type):
 
     return dataclass_type(**data_dict)
 
-def map_range(x: float, in_min: float, in_max: float, out_min: float, out_max: float):
+
+def map_range(inp: float, in_min: float, in_max: float, out_min: float, out_max: float):
     """Map bounds of input to bounds of output
 
     Args:
-        x (int): Input value
+        inp (int): Input value
         in_min (int): Input lower bound
         in_max (int): Input upper bound
         out_min (int): Output lower bound
@@ -159,7 +160,7 @@ def map_range(x: float, in_min: float, in_max: float, out_min: float, out_max: f
     Returns:
         int: Output value
     """
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    return (inp - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
 class MainWindow(QMainWindow):
@@ -168,7 +169,7 @@ class MainWindow(QMainWindow):
 
         # Mqtt Client
         self.client = mqtt.MqttClient()
-        self.client.hostname = mqtt_borker
+        self.client.hostname = mqtt_broker
         self.client.port = mqtt_port
 
         self.client.connected.connect(self.on_client_connect)
@@ -443,7 +444,7 @@ class MainWindow(QMainWindow):
         self.anim_single_color_right_layout.addStretch()
 
         # Rainbow Conf
-        self.anim_config_stack.insertWidget(A_RAINBOW_INDEX, self.generate_animation_config_unavailabe())
+        self.anim_config_stack.insertWidget(A_RAINBOW_INDEX, self.generate_animation_config_unavailable())
 
         # Glitter Rainbow Conf
 
@@ -463,7 +464,7 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_ratio.setRange(1, 50)
         self.anim_grainbow_ratio.valueChanged.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value()/100}}}"
+                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value() / 100}}}"
             )
         )
         self.anim_grainbow_ratio.sliderReleased.connect(
@@ -476,16 +477,16 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_layout.addStretch()
 
         # Colorloop Conf
-        self.anim_config_stack.insertWidget(A_COLORLOOP_INDEX, self.generate_animation_config_unavailabe())
+        self.anim_config_stack.insertWidget(A_COLORLOOP_INDEX, self.generate_animation_config_unavailable())
 
         # Magic Conf
-        self.anim_config_stack.insertWidget(A_MAGIC_INDEX, self.generate_animation_config_unavailabe())
+        self.anim_config_stack.insertWidget(A_MAGIC_INDEX, self.generate_animation_config_unavailable())
 
         # Fire Conf
-        self.anim_config_stack.insertWidget(A_FIRE_INDEX, self.generate_animation_config_unavailabe())
+        self.anim_config_stack.insertWidget(A_FIRE_INDEX, self.generate_animation_config_unavailable())
 
         # Colored Lights Conf
-        self.anim_config_stack.insertWidget(A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailabe())
+        self.anim_config_stack.insertWidget(A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailable())
 
         # Fade config
         self.anim_fade_widget = QWidget()
@@ -613,11 +614,11 @@ class MainWindow(QMainWindow):
         self.anim_flash_speed.setRange(3, 50)
         self.anim_flash_speed.valueChanged.connect(
             lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
-                                                               f"{self.anim_flash_speed.value()}}}")
+                                                             f"{self.anim_flash_speed.value()}}}")
         )
         self.anim_flash_speed.sliderReleased.connect(
             lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
-                                                               f"{self.anim_flash_speed.value()}}}")
+                                                             f"{self.anim_flash_speed.value()}}}")
         )
         self.anim_flash_layout.addWidget(self.anim_flash_speed)
 
@@ -626,7 +627,7 @@ class MainWindow(QMainWindow):
         else:
             self.show()
 
-    def check_mqtt_connection(self):
+    def check_mqtt_connection(self) -> None:
         if self.client.state == mqtt.MqttClient.Connected:
             if self.root_widget.currentIndex() not in [M_ABOUT_PAGE_INDEX, M_ANIM_CONF_INDEX]:
                 self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
@@ -648,14 +649,14 @@ class MainWindow(QMainWindow):
             self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
 
-    def on_client_connect(self):
+    def on_client_connect(self) -> None:
         self.client.subscribe(state_return_topic)
         self.client.subscribe(brightness_return_topic)
         self.client.subscribe(anim_return_topic)
         self.client.subscribe(data_request_return_topic)
         self.client.publish(data_request_topic, "request_type_full")
 
-    def on_client_message(self, topic: str, payload: str):
+    def on_client_message(self, topic: str, payload: str) -> None:
         if topic == state_return_topic:
             if payload == "ON":
                 self.led_powered = PowerStates.ON
@@ -726,7 +727,7 @@ class MainWindow(QMainWindow):
                     self.anim_flash_speed.setValue(self.animation_args.flash.speed)
                     self.anim_flash_speed.blockSignals(False)
 
-    def toggle_led_power(self):
+    def toggle_led_power(self) -> None:
         if self.led_powered == PowerStates.ON:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
@@ -740,19 +741,19 @@ class MainWindow(QMainWindow):
             self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(state_topic, "OFF")
 
-    def update_brightness(self):
+    def update_brightness(self) -> None:
         self.brightness_known = BrightnessStates.UNKNOWN
         self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
         self.client.publish(brightness_topic, self.control_brightness_slider.value())
 
-    def set_animation(self, name: str, _) -> None:
+    def set_animation(self, anim_name: str, _) -> None:
         self.animation_sidebar_frame.setEnabled(False)
-        self.client.publish(animation_topic, ANIMATION_LIST[name])
+        self.client.publish(animation_topic, ANIMATION_LIST[anim_name])
 
-    def show_about(self):
+    def show_about(self) -> None:
         self.root_widget.setCurrentIndex(M_ABOUT_PAGE_INDEX)
 
-    def anim_conf(self):
+    def anim_conf(self) -> None:
         self.root_widget.setCurrentIndex(M_ANIM_CONF_INDEX)
 
     def update_animation_page(self, animation: str) -> None:
@@ -761,7 +762,8 @@ class MainWindow(QMainWindow):
         else:
             self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
 
-    def generate_animation_config_unavailabe(self) -> QWidget:
+    @staticmethod
+    def generate_animation_config_unavailable() -> QWidget:
         anim_widget = QWidget()
 
         anim_layout = QVBoxLayout()
@@ -783,7 +785,7 @@ class MainWindow(QMainWindow):
 
         return anim_widget
 
-    def publish_and_update_args(self, topic, data):
+    def publish_and_update_args(self, topic: str, data: str) -> None:
         self.client.publish(topic, data)
         self.client.publish(data_request_topic, "request_type_args")
 
