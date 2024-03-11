@@ -334,6 +334,7 @@ class MainWindow(QMainWindow):
         self.about_top_bar.addStretch()
 
         self.about_side_by_side = QHBoxLayout()
+        self.about_side_by_side.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.about_layout.addLayout(self.about_side_by_side)
 
         self.about_icon = QLabel()
@@ -356,6 +357,12 @@ class MainWindow(QMainWindow):
         self.about_version.setObjectName("h1")
         self.about_version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.about_right_layout.addWidget(self.about_version)
+
+        self.about_qt_button = QPushButton("About Qt")
+        self.about_qt_button.setMaximumWidth(240)
+        self.about_qt_button.clicked.connect(app.aboutQt)
+        self.about_right_layout.addWidget(self.about_qt_button)
+        self.about_right_layout.setAlignment(self.about_qt_button, Qt.AlignmentFlag.AlignCenter)
 
         self.about_right_layout.addStretch()
 
@@ -790,7 +797,30 @@ class AnimationWidget(QFrame):
         self.setLayout(self.layout)
 
         self.icon = QLabel()
-        self.icon.setPixmap(qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
+
+        if title == "Single Color":
+            self.icon.setPixmap(qta.icon("mdi6.moon-full", color="#FFEE58").pixmap(72, 72))
+        elif title == "Rainbow":
+            self.icon.setPixmap(qta.icon("ph.rainbow", color="#FFEE58").pixmap(72, 72))
+        elif title == "Colorloop":
+            self.icon.setPixmap(qta.icon("mdi6.refresh", color="#FFEE58").pixmap(72, 72))
+        elif title == "Fire":
+            self.icon.setPixmap(qta.icon("mdi6.fire", color="#FFEE58").pixmap(72, 72))
+        elif title == "Magic":
+            self.icon.setPixmap(qta.icon("mdi6.magic-staff", color="#FFEE58").pixmap(72, 72))
+        elif title == "Colored Lights":
+            self.icon.setPixmap(qta.icon("mdi6.string-lights", color="#FFEE58").pixmap(72, 72))
+        elif title == "Flash":
+            self.icon.setPixmap(qta.icon("mdi6.flash", color="#FFEE58").pixmap(72, 72))
+        elif title == "Fade":
+            self.icon.setPixmap(qta.icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
+        elif title == "Wipe":
+            self.icon.setPixmap(qta.icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72))
+        elif title == "Glitter Rainbow":
+            self.icon.setPixmap(qta.icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
+        else:
+            self.icon.setPixmap(qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
+
         self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.icon)
 

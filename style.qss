@@ -2,6 +2,10 @@
     font-family: Cabin;
 }
 
+QPushButton {
+    font-size: 18px;
+}
+
 .QSlider:horizontal {
     min-height: 68px;
     max-height: 68px;
