@@ -38,7 +38,8 @@ class MqttClient(QtCore.QObject):
         self.m_result_code = None
 
         self.m_client = mqtt.Client(clean_session=self.m_cleanSession,
-                                    protocol=self.protocolVersion)
+                                    protocol=self.protocolVersion,
+                                    callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
 
         self.m_client.on_connect = self.on_connect
         self.m_client.on_message = self.on_message
