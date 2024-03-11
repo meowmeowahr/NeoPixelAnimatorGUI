@@ -65,6 +65,12 @@ brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
 
+fixed_size_config: dict = gui_config.get("fixed_size", {})
+
+fixed_size_enabled: bool = fixed_size_config.get("enabled", False)
+fixed_size_width: int = fixed_size_config.get("width", 1024)
+fixed_size_height: int = fixed_size_config.get("height", 600)
+
 ANIMATION_LIST = {
     "Single Color": "SingleColor",
     "Rainbow": "Rainbow",
@@ -177,6 +183,9 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
+
+        if fixed_size_enabled:
+            self.setFixedSize(QSize(fixed_size_width, fixed_size_height))
 
         self.root_widget = QStackedWidget()
         self.setCentralWidget(self.root_widget)

@@ -15,3 +15,7 @@ mqtt:
 gui:
   title: "NeoPixel Animator"
   fullscreen: false
+  fixed_size:
+    enabled: false
+    width: 1024
+    height: 600
