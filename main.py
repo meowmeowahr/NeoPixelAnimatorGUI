@@ -1,3 +1,9 @@
+"""
+/// NeoPixel Animator GUI ///
+DESCRIPTION: Fully featured PyQt GUI for controlling NeoPixelAnimator
+LICENSE: GPLv3
+"""
+
 import dataclasses
 import enum
 import functools
@@ -10,9 +16,11 @@ import platform
 
 import yaml
 
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
-from qtpy.QtGui import *
+from qtpy.QtWidgets import (QApplication, QMainWindow, QWidget, QFrame, QPushButton, QLabel,
+                            QVBoxLayout, QHBoxLayout, QScrollArea, QSlider, QStackedWidget,
+                            QScroller, QGridLayout, QGroupBox)
+from qtpy.QtCore import Qt, QSize, QTimer
+from qtpy.QtGui import QPixmap, QIcon, QFontDatabase
 import qdarktheme
 import qtawesome as qta
 
@@ -27,8 +35,8 @@ import widgets
 
 if platform.system() == "Windows":
     import ctypes
-
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"meowmeowahr.npanimator.client.{__version__}")
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        f"meowmeowahr.npanimator.client.{__version__}")
 
 # Import yaml config
 with open("config.yaml", encoding="utf-8") as stream:
@@ -123,17 +131,27 @@ ANIMATION_CONF_INDEXES = {
 
 
 class PowerStates(enum.Enum):
+    """ Power on states """
     OFF = 0
     ON = 1
     UNKNOWN = 2
 
 
 class BrightnessStates(enum.Enum):
+    """ Is brightness known? """
     KNOWN = 0
     UNKNOWN = 1
 
 
-def hex_to_rgb(hexa):
+def hex_to_rgb(hexa: str) -> tuple:
+    """Convert hex color string to RGB tuple
+
+    Args:
+        hexa (str): Hex color string Ex: "#00ff00"
+
+    Returns:
+        tuple: RGB color
+    """
     return tuple(int(hexa[i:i + 2], 16) for i in (0, 2, 4))
 
 
@@ -164,7 +182,7 @@ def map_range(inp: float, in_min: float, in_max: float, out_min: float, out_max:
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, parent: QApplication):
         super().__init__()
 
         # Mqtt Client
@@ -258,7 +276,8 @@ class MainWindow(QMainWindow):
         self.control_brightness_box.setLayout(self.control_brightness_layout)
 
         self.control_brightness_warning = QLabel()
-        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
+        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835")
+                                                  .pixmap(QSize(24, 24)))
         self.control_brightness_warning.setToolTip("Brightness data may be inaccurate")
         self.control_brightness_layout.addWidget(self.control_brightness_warning)
 
@@ -277,8 +296,10 @@ class MainWindow(QMainWindow):
 
         self.control_animatior_scroll = QScrollArea()
         self.control_animatior_scroll.setWidgetResizable(True)
-        self.control_animatior_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        QScroller.grabGesture(self.control_animatior_scroll, QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+        self.control_animatior_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        QScroller.grabGesture(self.control_animatior_scroll, 
+                              QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         self.animation_layout.addWidget(self.control_animatior_scroll)
 
         self.control_animator_widget = QWidget()
@@ -362,7 +383,7 @@ class MainWindow(QMainWindow):
 
         self.about_qt_button = QPushButton("About Qt")
         self.about_qt_button.setMaximumWidth(240)
-        self.about_qt_button.clicked.connect(app.aboutQt)
+        self.about_qt_button.clicked.connect(parent.aboutQt)
         self.about_right_layout.addWidget(self.about_qt_button)
         self.about_right_layout.setAlignment(self.about_qt_button, Qt.AlignmentFlag.AlignCenter)
 
@@ -743,7 +764,8 @@ class MainWindow(QMainWindow):
 
     def update_brightness(self) -> None:
         self.brightness_known = BrightnessStates.UNKNOWN
-        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24)))
+        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835")
+                                                  .pixmap(QSize(24, 24)))
         self.client.publish(brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, anim_name: str, _) -> None:
@@ -757,7 +779,7 @@ class MainWindow(QMainWindow):
         self.root_widget.setCurrentIndex(M_ANIM_CONF_INDEX)
 
     def update_animation_page(self, animation: str) -> None:
-        if animation in ANIMATION_CONF_INDEXES.keys():
+        if animation in ANIMATION_CONF_INDEXES:
             self.anim_config_stack.setCurrentIndex(ANIMATION_CONF_INDEXES[animation])
         else:
             self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
@@ -818,7 +840,8 @@ class AnimationWidget(QFrame):
         elif title == "Fade":
             self.icon.setPixmap(qta.icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
         elif title == "Wipe":
-            self.icon.setPixmap(qta.icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(qta.icon("mdi6.chevron-double-right", color="#FFEE58")
+            .pixmap(72, 72))
         elif title == "Glitter Rainbow":
             self.icon.setPixmap(qta.icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
         else:
@@ -842,5 +865,5 @@ if __name__ == "__main__":
             app.setStyleSheet(qdarktheme.load_stylesheet() + "\n" + qss.read())
         QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
 
-    win = MainWindow()
+    win = MainWindow(app)
     sys.exit(app.exec())
