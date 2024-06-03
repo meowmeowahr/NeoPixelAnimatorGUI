@@ -35,11 +35,11 @@ import widgets
 
 if platform.system() == "Windows":
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID( # type: ignore
         f"meowmeowahr.npanimator.client.{__version__}")
 
 # Import yaml config
-with open("config.yaml", encoding="utf-8") as stream:
+with open("config.yaml", "r", encoding="utf-8") as stream:
     try:
         configuration = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
@@ -73,6 +73,7 @@ brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
 app_custom_theme: bool = gui_config.get("custom_theming", True)
+app_dark_mode: bool = gui_config.get("dark_mode", True)
 
 fixed_size_config: dict = gui_config.get("fixed_size", {})
 
@@ -860,10 +861,16 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     if app_custom_theme:
-        qta.dark(app)
-        with open("style.qss", "r", encoding="utf-8") as qss:
-            app.setStyleSheet(qdarktheme.load_stylesheet() + "\n" + qss.read())
-        QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
+        if app_dark_mode:
+            qta.dark(app)
+            with open("style.qss", "r", encoding="utf-8") as qss:
+                app.setStyleSheet(qdarktheme.load_stylesheet() + "\n" + qss.read())
+            QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
+        else:
+            qta.light(app)
+            with open("style.qss", "r", encoding="utf-8") as qss:
+                app.setStyleSheet(qdarktheme.load_stylesheet(theme="light") + "\n" + qss.read())
+            QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
 
     win = MainWindow(app)
     sys.exit(app.exec())

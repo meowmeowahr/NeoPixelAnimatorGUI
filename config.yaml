@@ -1,5 +1,5 @@
 mqtt:
-  host: "pilight.lan"
+  host: "localhost"
   port: 1883
   topics:
     data_request_topic: "MQTTAnimator/data_request"
@@ -15,6 +15,7 @@ mqtt:
 gui:
   title: "NeoPixel Animator"
   custom_theming: true
+  dark_mode: false
   fullscreen: false
   fixed_size:
     enabled: false
