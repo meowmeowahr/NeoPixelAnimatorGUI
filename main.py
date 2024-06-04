@@ -18,16 +18,18 @@ import yaml
 
 from qtpy.QtWidgets import (QApplication, QMainWindow, QWidget, QFrame, QPushButton, QLabel,
                             QVBoxLayout, QHBoxLayout, QScrollArea, QSlider, QStackedWidget,
-                            QScroller, QGridLayout, QGroupBox)
+                            QScroller, QGridLayout, QGroupBox, QToolButton, QLineEdit, QSpinBox)
 from qtpy.QtCore import Qt, QSize, QTimer
 from qtpy.QtGui import QPixmap, QIcon, QFontDatabase
 import qdarktheme
 import qtawesome as qta
 
+from widgets import Serverity, WarningBar
 import palette
 
 import animation_data
 import mqtt
+import settings
 
 __version__ = "0.1.0"
 
@@ -53,8 +55,6 @@ mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
 
 gui_config: dict = configuration.get("gui", {})
 
-mqtt_broker: str = mqtt_config.get("host", "localhost")
-mqtt_port: int = mqtt_config.get("port", 1883)
 client_id = f"mqtt-animator-{random.randint(0, 1000)}"
 
 data_request_topic: str = mqtt_topics.get("data_request_topic", "MQTTAnimator/data_request")
@@ -81,7 +81,7 @@ fixed_size_enabled: bool = fixed_size_config.get("enabled", False)
 fixed_size_width: int = fixed_size_config.get("width", 1024)
 fixed_size_height: int = fixed_size_config.get("height", 600)
 
-ANIMATION_LIST = {
+ANIMATION_LIST: dict[str, str] = {
     "Single Color": "SingleColor",
     "Rainbow": "Rainbow",
     "Glitter Rainbow": "GlitterRainbow",
@@ -99,7 +99,8 @@ ANIMATION_LIST = {
 M_CONNECTION_WIDGET_INDEX = 0
 M_CONTROL_WIDGET_INDEX = 1
 M_ABOUT_PAGE_INDEX = 2
-M_ANIM_CONF_INDEX = 3
+M_SETTINGS_PAGE_INDEX = 3
+M_ANIM_CONF_INDEX = 4
 
 A_UNKNOWN_INDEX = 0
 A_SINGLE_COLOR_INDEX = 1
@@ -186,10 +187,13 @@ class MainWindow(QMainWindow):
     def __init__(self, parent: QApplication):
         super().__init__()
 
+        # Settings Manager
+        self.settings = settings.SettingsManager()
+
         # Mqtt Client
         self.client = mqtt.MqttClient()
-        self.client.hostname = mqtt_broker
-        self.client.port = mqtt_port
+        self.client.hostname = self.settings.mqtt_host
+        self.client.port = self.settings.mqtt_port
 
         self.client.connected.connect(self.on_client_connect)
         self.client.messageSignal.connect(self.on_client_message)
@@ -259,6 +263,7 @@ class MainWindow(QMainWindow):
         self.control_power.setFlat(True)
         self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
         self.control_power.setIconSize(QSize(56, 56))
+        self.control_power.setFixedSize(self.control_power.minimumSizeHint())
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
 
@@ -269,6 +274,14 @@ class MainWindow(QMainWindow):
         self.control_about.clicked.connect(self.show_about)
         self.control_about.setFixedWidth(self.control_about.minimumSizeHint().height())
         self.control_top_bar.addWidget(self.control_about)
+
+        self.control_settings = QPushButton()
+        self.control_settings.setFlat(True)
+        self.control_settings.setIcon(qta.icon("mdi6.cog"))
+        self.control_settings.setIconSize(QSize(24, 24))
+        self.control_settings.clicked.connect(self.show_settings)
+        self.control_settings.setFixedWidth(self.control_settings.minimumSizeHint().height())
+        self.control_top_bar.addWidget(self.control_settings)
 
         self.control_brightness_box = QGroupBox("Brightness")
         self.control_layout.addWidget(self.control_brightness_box)
@@ -644,6 +657,42 @@ class MainWindow(QMainWindow):
         )
         self.anim_flash_layout.addWidget(self.anim_flash_speed)
 
+        # Application settings
+        self.settings_widget = QWidget()
+        self.root_widget.insertWidget(M_SETTINGS_PAGE_INDEX, self.settings_widget)
+
+        self.settings_root_layout = QVBoxLayout()
+        self.settings_widget.setLayout(self.settings_root_layout)
+
+        self.settings_top_bar = QHBoxLayout()
+        self.settings_root_layout.addLayout(self.settings_top_bar)
+
+        self.settings_back = QPushButton()
+        self.settings_back.setFlat(True)
+        self.settings_back.setIcon(qta.icon("mdi6.arrow-left-box"))
+        self.settings_back.setIconSize(QSize(48, 48))
+        self.settings_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
+        self.settings_top_bar.addWidget(self.settings_back)
+
+        self.settings_top_bar.addStretch()
+
+        self.settings_side_by_side = QHBoxLayout()
+        self.settings_root_layout.addLayout(self.settings_side_by_side)
+
+        self.settings_sidebar_widget = QFrame()
+        self.settings_side_by_side.addWidget(self.settings_sidebar_widget)
+
+        self.settings_sidebar_layout = QVBoxLayout()
+        self.settings_sidebar_widget.setLayout(self.settings_sidebar_layout)
+
+        self.settings_sidebar_items: list[QWidget] = []
+
+        self.settings_pages = QStackedWidget()
+        self.settings_side_by_side.addWidget(self.settings_pages)
+
+        self.add_setting_sidebar_item("MQTT Server", "mdi6.server-network", self.generate_mqtt_server_config_page())
+        self.add_setting_sidebar_item("MQTT Topics", "mdi6.slash-forward-box", QLabel("mqtt topics"))
+
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -651,7 +700,7 @@ class MainWindow(QMainWindow):
 
     def check_mqtt_connection(self) -> None:
         if self.client.state == mqtt.MqttClient.Connected:
-            if self.root_widget.currentIndex() not in [M_ABOUT_PAGE_INDEX, M_ANIM_CONF_INDEX]:
+            if self.root_widget.currentIndex() not in [M_ABOUT_PAGE_INDEX, M_ANIM_CONF_INDEX, M_SETTINGS_PAGE_INDEX]:
                 self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
             return
         elif self.client.state == mqtt.MqttClient.Connecting:
@@ -776,6 +825,9 @@ class MainWindow(QMainWindow):
     def show_about(self) -> None:
         self.root_widget.setCurrentIndex(M_ABOUT_PAGE_INDEX)
 
+    def show_settings(self) -> None:
+        self.root_widget.setCurrentIndex(M_SETTINGS_PAGE_INDEX)
+
     def anim_conf(self) -> None:
         self.root_widget.setCurrentIndex(M_ANIM_CONF_INDEX)
 
@@ -811,6 +863,55 @@ class MainWindow(QMainWindow):
     def publish_and_update_args(self, topic: str, data: str) -> None:
         self.client.publish(topic, data)
         self.client.publish(data_request_topic, "request_type_args")
+
+    def add_setting_sidebar_item(self, title: str, icon: str, content: QWidget):
+        i: int = len(self.settings_sidebar_items)
+
+        button = QToolButton()
+        button.setObjectName("sidebar_button")
+        button.setText(title)
+        button.setIcon(qta.icon(icon))
+        button.setIconSize(QSize(24, 24))
+        button.setFixedWidth(180)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.settings_sidebar_items.append(button)
+        self.settings_sidebar_layout.addWidget(button)
+
+        self.settings_pages.insertWidget(i, content)
+        button.clicked.connect(lambda: self.settings_pages.setCurrentIndex(i))
+
+    def generate_mqtt_server_config_page(self):
+        frame = QFrame()
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        warning = WarningBar("A relaunch is required for these settings to apply")
+        layout.addWidget(warning)
+
+        host_config_layout = QHBoxLayout()
+        layout.addLayout(host_config_layout)
+
+        host_config_label = QLabel("MQTT Broker Hostname/IP")
+        host_config_layout.addWidget(host_config_label)
+
+        host_config = QLineEdit()
+        host_config.setText(self.settings.mqtt_host)
+        host_config.textChanged.connect(self.settings.set_mqtt_host)
+        host_config_layout.addWidget(host_config)
+
+        port_config_layout = QHBoxLayout()
+        layout.addLayout(port_config_layout)
+
+        port_config_label = QLabel("MQTT Broker Port")
+        port_config_layout.addWidget(port_config_label)
+
+        port_config = QSpinBox()
+        port_config.setRange(1, 65535)
+        port_config.setValue(self.settings.mqtt_port)
+        port_config.valueChanged.connect(self.settings.set_mqtt_port)
+        port_config_layout.addWidget(port_config)
+
+        return frame
 
 
 class AnimationWidget(QFrame):

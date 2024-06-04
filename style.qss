@@ -57,3 +57,17 @@ QPushButton {
     font-family: Cabin;
     font-size: 14px;
 }
+
+#sidebar_button {
+    font-family: Cabin;
+    font-size: 16px;
+}
+
+#warning_bar_text {
+    font-size: 16px;
+    font-weight: semibold;
+}
+
+#warning_bar_text[severity="warn"] {
+    color: #212121;
+}
