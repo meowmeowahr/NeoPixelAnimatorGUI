@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
         self.control_animation_list = []
         for idx, key in enumerate(ANIMATION_LIST.keys()):
             widget = AnimationWidget(key)
-            widget.mousePressEvent = functools.partial(self.set_animation, key)
+            widget.mousePressEvent = functools.partial(self.set_animation, key) # type: ignore
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
@@ -819,8 +819,8 @@ class AnimationWidget(QFrame):
         self.setFrameShape(QFrame.Shape.Box)
         self.setMinimumWidth(160)
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        self.root_layout = QVBoxLayout()
+        self.setLayout(self.root_layout)
 
         self.icon = QLabel()
 
@@ -849,12 +849,12 @@ class AnimationWidget(QFrame):
             self.icon.setPixmap(qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
 
         self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.layout.addWidget(self.icon)
+        self.root_layout.addWidget(self.icon)
 
         self.title = QLabel(title)
         self.title.setObjectName("h3")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.layout.addWidget(self.title)
+        self.root_layout.addWidget(self.title)
 
 
 if __name__ == "__main__":
