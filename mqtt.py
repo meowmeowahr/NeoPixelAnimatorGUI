@@ -40,14 +40,14 @@ class MqttClient(QtCore.QObject):
 
         if self.m_protocolVersion in [MqttClient.MQTT_3_1, MqttClient.MQTT_3_1_1]:
             self.m_client = mqtt.Client(
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
                 clean_session=self.m_cleanSession,
                 protocol=self.protocolVersion,
-                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             )
         elif self.m_protocolVersion in [MqttClient.MQTT_5]:
             self.m_client = mqtt.Client(
-                protocol=self.protocolVersion,
                 callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
+                protocol=self.protocolVersion,
             )
 
         self.m_client.on_connect = self.on_connect
