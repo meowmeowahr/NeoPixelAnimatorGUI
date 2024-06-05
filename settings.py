@@ -2,7 +2,7 @@
 QSettings Loader for NeoPixelAnimatorGUI
 """
 
-from qtpy.QtCore  import QSettings
+from qtpy.QtCore import QSettings
 
 from loguru import logger
 
@@ -34,4 +34,29 @@ class SettingsManager:
 
     def set_mqtt_port(self, new_value: int):
         self.mqtt_port = new_value
+
+    @property
+    def data_request_topic(self) -> str:
+        return self.qsettings.value("mqtt/topics/data_request_topic", "MQTTAnimator/data_request", str) # type: ignore
+    
+    @data_request_topic.setter
+    def data_request_topic(self, new_value: str):
+        self.qsettings.setValue("mqtt/topics/data_request_topic", new_value)
+        logger.info(f"Set value of mqtt/topics/data_request_topic to {new_value}")
+
+    def set_data_request_topic(self, new_value: str):
+        self.data_request_topic = new_value
+
+    @property
+    def return_data_request_topic(self) -> str:
+        return self.qsettings.value("mqtt/topics/return_data_request_topic", "MQTTAnimator/rdata_request", str) # type: ignore
+    
+    @return_data_request_topic.setter
+    def return_data_request_topic(self, new_value: str):
+        self.qsettings.setValue("mqtt/topics/return_data_request_topic", new_value)
+        logger.info(f"Set value of mqtt/topics/return_data_request_topic to {new_value}")
+
+    def set_return_data_request_topic(self, new_value: str):
+        self.return_data_request_topic = new_value
+
 

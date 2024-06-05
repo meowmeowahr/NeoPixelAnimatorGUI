@@ -8,6 +8,7 @@ class Serverity(Enum):
     SEVERE = 0
     WARN = 1
 
+
 class WarningBar(QFrame):
     def __init__(self, text="", closeable=False, severity=Serverity.WARN) -> None:
         super(WarningBar, self).__init__()
@@ -27,7 +28,9 @@ class WarningBar(QFrame):
         self._text = QLabel(text)
         # self.__text.setStyleSheet("font-weight: bold;")
         self._text.setObjectName("warning_bar_text")
-        self._text.setProperty("severity", "warn" if severity == Serverity.WARN else "severe")
+        self._text.setProperty(
+            "severity", "warn" if severity == Serverity.WARN else "severe"
+        )
         self._text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._layout.addWidget(self._text)
 
@@ -39,7 +42,8 @@ class WarningBar(QFrame):
 
 
 def rgb_to_hex(rgb):
-    return '%02x%02x%02x' % tuple(rgb)
+    return "%02x%02x%02x" % tuple(rgb)
+
 
 class ColorBlock(QFrame):
     """

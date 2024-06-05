@@ -5,48 +5,67 @@ LICENSE: GPLv3
 """
 
 import dataclasses
-import enum
-import functools
+from enum import Enum
+from functools import partial
 import json
-import random
+from random import randint
 import sys
-import traceback
-import logging
-import platform
+from traceback import print_exc
+from loguru import logger
+from platform import system
+from typing import Any, Callable
 
-import yaml
+from yaml import safe_load, YAMLError
 
-from qtpy.QtWidgets import (QApplication, QMainWindow, QWidget, QFrame, QPushButton, QLabel,
-                            QVBoxLayout, QHBoxLayout, QScrollArea, QSlider, QStackedWidget,
-                            QScroller, QGridLayout, QGroupBox, QToolButton, QLineEdit, QSpinBox)
+from qtpy.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QFrame,
+    QPushButton,
+    QLabel,
+    QVBoxLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QSlider,
+    QStackedWidget,
+    QScroller,
+    QGridLayout,
+    QGroupBox,
+    QToolButton,
+    QLineEdit,
+    QSpinBox,
+)
 from qtpy.QtCore import Qt, QSize, QTimer
 from qtpy.QtGui import QPixmap, QIcon, QFontDatabase
-import qdarktheme
-import qtawesome as qta
+from qdarktheme import load_stylesheet
+from qtawesome import icon
+from qtawesome import dark as qtadark
+from qtawesome import light as qtalight
 
-from widgets import Serverity, WarningBar
-import palette
+from widgets import WarningBar, ColorBlock
+from palette import PaletteGrid, PALETTES
 
-import animation_data
-import mqtt
-import settings
+from animation_data import AnimationArgs
+from mqtt import MqttClient
+from settings import SettingsManager
 
 __version__ = "0.1.0"
 
-import widgets
-
-if platform.system() == "Windows":
+if system() == "Windows":
     import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID( # type: ignore
-        f"meowmeowahr.npanimator.client.{__version__}")
+
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(  # type: ignore
+        f"meowmeowahr.npanimator.client.{__version__}"
+    )
 
 # Import yaml config
 with open("config.yaml", "r", encoding="utf-8") as stream:
     try:
-        configuration = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        traceback.print_exc()
-        logging.critical("YAML Parsing Error, %s", exc)
+        configuration = safe_load(stream)
+    except YAMLError as exc:
+        print_exc()
+        logger.critical("YAML Parsing Error, %s", exc)
         sys.exit(0)
 
 mqtt_config: dict = configuration.get("mqtt", {})
@@ -55,20 +74,18 @@ mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
 
 gui_config: dict = configuration.get("gui", {})
 
-client_id = f"mqtt-animator-{random.randint(0, 1000)}"
+client_id = f"mqtt-animator-{randint(0, 1000)}"
 
-data_request_topic: str = mqtt_topics.get("data_request_topic", "MQTTAnimator/data_request")
 state_topic: str = mqtt_topics.get("state_topic", "MQTTAnimator/state")
 brightness_topic: str = mqtt_topics.get("brightness_topic", "MQTTAnimator/brightness")
 args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
 animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
 
-data_request_return_topic: str = mqtt_topics.get("return_data_request_topic",
-                                                 "MQTTAnimator/rdata_request")
 state_return_topic: str = mqtt_topics.get("return_state_topic", "MQTTAnimator/rstate")
 anim_return_topic: str = mqtt_topics.get("return_anim_topic", "MQTTAnimator/ranimation")
-brightness_return_topic: str = mqtt_topics.get("return_brightness_topic",
-                                               "MQTTAnimator/rbrightness")
+brightness_return_topic: str = mqtt_topics.get(
+    "return_brightness_topic", "MQTTAnimator/rbrightness"
+)
 
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
@@ -93,7 +110,7 @@ ANIMATION_LIST: dict[str, str] = {
     "Flash": "Flash",
     "Wipe": "Wipe",
     "Random": "Random",
-    "Random Color": "RandomColor"
+    "Random Color": "RandomColor",
 }
 
 M_CONNECTION_WIDGET_INDEX = 0
@@ -128,19 +145,21 @@ ANIMATION_CONF_INDEXES = {
     "Flash": A_FLASH_INDEX,
     "Wipe": A_WIPE_INDEX,
     "Random": A_RANDOM_INDEX,
-    "RandomColor": A_RANDOM_COLOR_INDEX
+    "RandomColor": A_RANDOM_COLOR_INDEX,
 }
 
 
-class PowerStates(enum.Enum):
-    """ Power on states """
+class PowerStates(Enum):
+    """Power on states"""
+
     OFF = 0
     ON = 1
     UNKNOWN = 2
 
 
-class BrightnessStates(enum.Enum):
-    """ Is brightness known? """
+class BrightnessStates(Enum):
+    """Is brightness known?"""
+
     KNOWN = 0
     UNKNOWN = 1
 
@@ -154,7 +173,7 @@ def hex_to_rgb(hexa: str) -> tuple:
     Returns:
         tuple: RGB color
     """
-    return tuple(int(hexa[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(hexa[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def dict_to_dataclass(data_dict, dataclass_type):
@@ -188,10 +207,10 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Settings Manager
-        self.settings = settings.SettingsManager()
+        self.settings = SettingsManager()
 
         # Mqtt Client
-        self.client = mqtt.MqttClient()
+        self.client = MqttClient()
         self.client.hostname = self.settings.mqtt_host
         self.client.port = self.settings.mqtt_port
 
@@ -204,7 +223,7 @@ class MainWindow(QMainWindow):
         self.led_powered = PowerStates.UNKNOWN
         self.brightness_value = 0
         self.brightness_known = BrightnessStates.UNKNOWN
-        self.animation_args = animation_data.AnimationArgs()
+        self.animation_args = AnimationArgs()
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
@@ -233,7 +252,9 @@ class MainWindow(QMainWindow):
         self.connection_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_layout.addWidget(self.connection_label)
 
-        self.connection_attempts_label = QLabel(f"Connection Attempts: {self.connection_attempts}")
+        self.connection_attempts_label = QLabel(
+            f"Connection Attempts: {self.connection_attempts}"
+        )
         self.connection_attempts_label.setObjectName("h3")
         self.connection_attempts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_layout.addWidget(self.connection_attempts_label)
@@ -261,7 +282,7 @@ class MainWindow(QMainWindow):
 
         self.control_power = QPushButton()
         self.control_power.setFlat(True)
-        self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+        self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
         self.control_power.setIconSize(QSize(56, 56))
         self.control_power.setFixedSize(self.control_power.minimumSizeHint())
         self.control_power.clicked.connect(self.toggle_led_power)
@@ -269,7 +290,7 @@ class MainWindow(QMainWindow):
 
         self.control_about = QPushButton()
         self.control_about.setFlat(True)
-        self.control_about.setIcon(qta.icon("mdi6.information-slab-circle"))
+        self.control_about.setIcon(icon("mdi6.information-slab-circle"))
         self.control_about.setIconSize(QSize(24, 24))
         self.control_about.clicked.connect(self.show_about)
         self.control_about.setFixedWidth(self.control_about.minimumSizeHint().height())
@@ -277,10 +298,12 @@ class MainWindow(QMainWindow):
 
         self.control_settings = QPushButton()
         self.control_settings.setFlat(True)
-        self.control_settings.setIcon(qta.icon("mdi6.cog"))
+        self.control_settings.setIcon(icon("mdi6.cog"))
         self.control_settings.setIconSize(QSize(24, 24))
         self.control_settings.clicked.connect(self.show_settings)
-        self.control_settings.setFixedWidth(self.control_settings.minimumSizeHint().height())
+        self.control_settings.setFixedWidth(
+            self.control_settings.minimumSizeHint().height()
+        )
         self.control_top_bar.addWidget(self.control_settings)
 
         self.control_brightness_box = QGroupBox("Brightness")
@@ -290,8 +313,9 @@ class MainWindow(QMainWindow):
         self.control_brightness_box.setLayout(self.control_brightness_layout)
 
         self.control_brightness_warning = QLabel()
-        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835")
-                                                  .pixmap(QSize(24, 24)))
+        self.control_brightness_warning.setPixmap(
+            icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24))
+        )
         self.control_brightness_warning.setToolTip("Brightness data may be inaccurate")
         self.control_brightness_layout.addWidget(self.control_brightness_warning)
 
@@ -311,9 +335,12 @@ class MainWindow(QMainWindow):
         self.control_animatior_scroll = QScrollArea()
         self.control_animatior_scroll.setWidgetResizable(True)
         self.control_animatior_scroll.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        QScroller.grabGesture(self.control_animatior_scroll, 
-                              QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        QScroller.grabGesture(
+            self.control_animatior_scroll,
+            QScroller.ScrollerGestureType.LeftMouseButtonGesture,
+        )
         self.animation_layout.addWidget(self.control_animatior_scroll)
 
         self.control_animator_widget = QWidget()
@@ -325,7 +352,7 @@ class MainWindow(QMainWindow):
         self.control_animation_list = []
         for idx, key in enumerate(ANIMATION_LIST.keys()):
             widget = AnimationWidget(key)
-            widget.mousePressEvent = functools.partial(self.set_animation, key) # type: ignore
+            widget.mousePressEvent = partial(self.set_animation, key)  # type: ignore
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
@@ -338,9 +365,11 @@ class MainWindow(QMainWindow):
         self.animation_sidebar_frame.setLayout(self.animation_sidebar_layout)
 
         self.animation_settings = QPushButton()
-        self.animation_settings.setIcon(qta.icon("mdi6.tune-vertical-variant"))
+        self.animation_settings.setIcon(icon("mdi6.tune-vertical-variant"))
         self.animation_settings.setIconSize(QSize(42, 42))
-        self.animation_settings.setFixedWidth(self.animation_settings.minimumSizeHint().height())
+        self.animation_settings.setFixedWidth(
+            self.animation_settings.minimumSizeHint().height()
+        )
         self.animation_settings.clicked.connect(self.anim_conf)
         self.animation_settings.setFlat(True)
         self.animation_sidebar_layout.addWidget(self.animation_settings)
@@ -357,9 +386,11 @@ class MainWindow(QMainWindow):
 
         self.about_back = QPushButton()
         self.about_back.setFlat(True)
-        self.about_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
+        self.about_back.setIcon(icon("mdi6.arrow-left-box", color="#9EA7AA"))
         self.about_back.setIconSize(QSize(48, 48))
-        self.about_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
+        self.about_back.clicked.connect(
+            lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
+        )
         self.about_top_bar.addWidget(self.about_back)
 
         self.about_top_bar.addStretch()
@@ -399,7 +430,9 @@ class MainWindow(QMainWindow):
         self.about_qt_button.setMaximumWidth(240)
         self.about_qt_button.clicked.connect(parent.aboutQt)
         self.about_right_layout.addWidget(self.about_qt_button)
-        self.about_right_layout.setAlignment(self.about_qt_button, Qt.AlignmentFlag.AlignCenter)
+        self.about_right_layout.setAlignment(
+            self.about_qt_button, Qt.AlignmentFlag.AlignCenter
+        )
 
         self.about_right_layout.addStretch()
 
@@ -415,9 +448,11 @@ class MainWindow(QMainWindow):
 
         self.anim_conf_back = QPushButton()
         self.anim_conf_back.setFlat(True)
-        self.anim_conf_back.setIcon(qta.icon("mdi6.arrow-left-box", color="#9EA7AA"))
+        self.anim_conf_back.setIcon(icon("mdi6.arrow-left-box", color="#9EA7AA"))
         self.anim_conf_back.setIconSize(QSize(48, 48))
-        self.anim_conf_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
+        self.anim_conf_back.clicked.connect(
+            lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
+        )
         self.anim_conf_top_bar.addWidget(self.anim_conf_back)
 
         self.anim_conf_top_bar.addStretch()
@@ -441,7 +476,9 @@ class MainWindow(QMainWindow):
 
         self.unknown_anim_icon = QLabel()
         self.unknown_anim_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.unknown_anim_icon.setPixmap(qta.icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128))
+        self.unknown_anim_icon.setPixmap(
+            icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128)
+        )
         self.unknown_anim_layout.addWidget(self.unknown_anim_icon)
 
         self.unknown_anim_label = QLabel("Animation Unknown")
@@ -452,15 +489,19 @@ class MainWindow(QMainWindow):
         self.unknown_anim_layout.addStretch()
 
         self.anim_single_color_widget = QWidget()
-        self.anim_config_stack.insertWidget(A_SINGLE_COLOR_INDEX, self.anim_single_color_widget)
+        self.anim_config_stack.insertWidget(
+            A_SINGLE_COLOR_INDEX, self.anim_single_color_widget
+        )
 
         self.anim_single_color_layout = QHBoxLayout()
         self.anim_single_color_widget.setLayout(self.anim_single_color_layout)
 
-        self.anim_single_color_palette = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_single_color_palette = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_single_color_palette.selected.connect(
-            lambda c: self.publish_and_update_args(args_topic, f"single_color,{{\"color\": "
-                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+            lambda c: self.publish_and_update_args(
+                args_topic,
+                f'single_color,{{"color": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}",
+            )
         )
         self.anim_single_color_layout.addWidget(self.anim_single_color_palette)
 
@@ -471,20 +512,26 @@ class MainWindow(QMainWindow):
 
         self.anim_single_color_current_label = QLabel("Current")
         self.anim_single_color_current_label.setObjectName("h2")
-        self.anim_single_color_right_layout.addWidget(self.anim_single_color_current_label)
+        self.anim_single_color_right_layout.addWidget(
+            self.anim_single_color_current_label
+        )
 
-        self.anim_single_color_current = widgets.ColorBlock()
+        self.anim_single_color_current = ColorBlock()
         self.anim_single_color_right_layout.addWidget(self.anim_single_color_current)
 
         self.anim_single_color_right_layout.addStretch()
 
         # Rainbow Conf
-        self.anim_config_stack.insertWidget(A_RAINBOW_INDEX, self.generate_animation_config_unavailable())
+        self.anim_config_stack.insertWidget(
+            A_RAINBOW_INDEX, self.generate_animation_config_unavailable()
+        )
 
         # Glitter Rainbow Conf
 
         self.anim_grainbow_widget = QWidget()
-        self.anim_config_stack.insertWidget(A_GLITTER_RAINBOW_INDEX, self.anim_grainbow_widget)
+        self.anim_config_stack.insertWidget(
+            A_GLITTER_RAINBOW_INDEX, self.anim_grainbow_widget
+        )
 
         self.anim_grainbow_layout = QVBoxLayout()
         self.anim_grainbow_widget.setLayout(self.anim_grainbow_layout)
@@ -499,12 +546,14 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_ratio.setRange(1, 50)
         self.anim_grainbow_ratio.valueChanged.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value() / 100}}}"
+                args_topic,
+                f'glitter_rainbow,{{"glitter_ratio": {self.anim_grainbow_ratio.value() / 100}}}',
             )
         )
         self.anim_grainbow_ratio.sliderReleased.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f"glitter_rainbow,{{\"glitter_ratio\": {self.anim_grainbow_ratio.value() / 100}}}"
+                args_topic,
+                f'glitter_rainbow,{{"glitter_ratio": {self.anim_grainbow_ratio.value() / 100}}}',
             )
         )
         self.anim_grainbow_layout.addWidget(self.anim_grainbow_ratio)
@@ -512,16 +561,24 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_layout.addStretch()
 
         # Colorloop Conf
-        self.anim_config_stack.insertWidget(A_COLORLOOP_INDEX, self.generate_animation_config_unavailable())
+        self.anim_config_stack.insertWidget(
+            A_COLORLOOP_INDEX, self.generate_animation_config_unavailable()
+        )
 
         # Magic Conf
-        self.anim_config_stack.insertWidget(A_MAGIC_INDEX, self.generate_animation_config_unavailable())
+        self.anim_config_stack.insertWidget(
+            A_MAGIC_INDEX, self.generate_animation_config_unavailable()
+        )
 
         # Fire Conf
-        self.anim_config_stack.insertWidget(A_FIRE_INDEX, self.generate_animation_config_unavailable())
+        self.anim_config_stack.insertWidget(
+            A_FIRE_INDEX, self.generate_animation_config_unavailable()
+        )
 
         # Colored Lights Conf
-        self.anim_config_stack.insertWidget(A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailable())
+        self.anim_config_stack.insertWidget(
+            A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailable()
+        )
 
         # Fade config
         self.anim_fade_widget = QWidget()
@@ -533,10 +590,11 @@ class MainWindow(QMainWindow):
         self.anim_fade_a_layout = QVBoxLayout()
         self.anim_fade_layout.addLayout(self.anim_fade_a_layout)
 
-        self.anim_fade_palette_a = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_fade_palette_a.selected.connect(
-            lambda c: self.publish_and_update_args(args_topic, f"fade,{{\"colora\": "
-                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+            lambda c: self.publish_and_update_args(
+                args_topic, f'fade,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
         )
         self.anim_fade_a_layout.addWidget(self.anim_fade_palette_a)
 
@@ -549,7 +607,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_current_a_label.setObjectName("h2")
         self.anim_fade_a_bottom_layout.addWidget(self.anim_fade_current_a_label)
 
-        self.anim_fade_current_a = widgets.ColorBlock()
+        self.anim_fade_current_a = ColorBlock()
         self.anim_fade_current_a.setFixedHeight(32)
         self.anim_fade_a_bottom_layout.addWidget(self.anim_fade_current_a)
 
@@ -562,10 +620,11 @@ class MainWindow(QMainWindow):
         self.anim_fade_b_layout = QVBoxLayout()
         self.anim_fade_layout.addLayout(self.anim_fade_b_layout)
 
-        self.anim_fade_palette_b = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_fade_palette_b.selected.connect(
-            lambda c: self.publish_and_update_args(args_topic, f"fade,{{\"colorb\": "
-                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+            lambda c: self.publish_and_update_args(
+                args_topic, f'fade,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
         )
         self.anim_fade_b_layout.addWidget(self.anim_fade_palette_b)
 
@@ -578,7 +637,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_current_b_label.setObjectName("h2")
         self.anim_fade_b_bottom_layout.addWidget(self.anim_fade_current_b_label)
 
-        self.anim_fade_current_b = widgets.ColorBlock()
+        self.anim_fade_current_b = ColorBlock()
         self.anim_fade_current_b.setFixedHeight(32)
         self.anim_fade_b_bottom_layout.addWidget(self.anim_fade_current_b)
 
@@ -594,10 +653,11 @@ class MainWindow(QMainWindow):
         self.anim_flash_a_layout = QVBoxLayout()
         self.anim_flash_layout.addLayout(self.anim_flash_a_layout)
 
-        self.anim_flash_palette_a = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_flash_palette_a.selected.connect(
-            lambda c: self.publish_and_update_args(args_topic, f"flash,{{\"colora\": "
-                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+            lambda c: self.publish_and_update_args(
+                args_topic, f'flash,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
         )
         self.anim_flash_a_layout.addWidget(self.anim_flash_palette_a)
 
@@ -610,7 +670,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_current_a_label.setObjectName("h2")
         self.anim_flash_a_bottom_layout.addWidget(self.anim_flash_current_a_label)
 
-        self.anim_flash_current_a = widgets.ColorBlock()
+        self.anim_flash_current_a = ColorBlock()
         self.anim_flash_current_a.setFixedHeight(32)
         self.anim_flash_a_bottom_layout.addWidget(self.anim_flash_current_a)
 
@@ -623,10 +683,11 @@ class MainWindow(QMainWindow):
         self.anim_flash_b_layout = QVBoxLayout()
         self.anim_flash_layout.addLayout(self.anim_flash_b_layout)
 
-        self.anim_flash_palette_b = palette.PaletteGrid(palette.PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_flash_palette_b.selected.connect(
-            lambda c: self.publish_and_update_args(args_topic, f"flash,{{\"colorb\": "
-                                                               f"{list(hex_to_rgb(c.lstrip('#')))}}}")
+            lambda c: self.publish_and_update_args(
+                args_topic, f'flash,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
         )
         self.anim_flash_b_layout.addWidget(self.anim_flash_palette_b)
 
@@ -639,7 +700,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_current_b_label.setObjectName("h2")
         self.anim_flash_b_bottom_layout.addWidget(self.anim_flash_current_b_label)
 
-        self.anim_flash_current_b = widgets.ColorBlock()
+        self.anim_flash_current_b = ColorBlock()
         self.anim_flash_current_b.setFixedHeight(32)
         self.anim_flash_b_bottom_layout.addWidget(self.anim_flash_current_b)
 
@@ -648,12 +709,14 @@ class MainWindow(QMainWindow):
         self.anim_flash_speed = QSlider()
         self.anim_flash_speed.setRange(3, 50)
         self.anim_flash_speed.valueChanged.connect(
-            lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
-                                                             f"{self.anim_flash_speed.value()}}}")
+            lambda: self.publish_and_update_args(
+                args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
+            )
         )
         self.anim_flash_speed.sliderReleased.connect(
-            lambda: self.publish_and_update_args(args_topic, f"flash,{{\"speed\": "
-                                                             f"{self.anim_flash_speed.value()}}}")
+            lambda: self.publish_and_update_args(
+                args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
+            )
         )
         self.anim_flash_layout.addWidget(self.anim_flash_speed)
 
@@ -669,9 +732,11 @@ class MainWindow(QMainWindow):
 
         self.settings_back = QPushButton()
         self.settings_back.setFlat(True)
-        self.settings_back.setIcon(qta.icon("mdi6.arrow-left-box"))
+        self.settings_back.setIcon(icon("mdi6.arrow-left-box"))
         self.settings_back.setIconSize(QSize(48, 48))
-        self.settings_back.clicked.connect(lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX))
+        self.settings_back.clicked.connect(
+            lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
+        )
         self.settings_top_bar.addWidget(self.settings_back)
 
         self.settings_top_bar.addStretch()
@@ -690,8 +755,16 @@ class MainWindow(QMainWindow):
         self.settings_pages = QStackedWidget()
         self.settings_side_by_side.addWidget(self.settings_pages)
 
-        self.add_setting_sidebar_item("MQTT Server", "mdi6.server-network", self.generate_mqtt_server_config_page())
-        self.add_setting_sidebar_item("MQTT Topics", "mdi6.slash-forward-box", QLabel("mqtt topics"))
+        self.add_setting_sidebar_item(
+            "MQTT Server",
+            "mdi6.server-network",
+            self.generate_mqtt_server_config_page(),
+        )
+        self.add_setting_sidebar_item(
+            "MQTT Topics",
+            "mdi6.slash-forward-box",
+            self.generate_mqtt_topics_config_page(),
+        )
 
         if app_fullscreen:
             self.showFullScreen()
@@ -699,24 +772,34 @@ class MainWindow(QMainWindow):
             self.show()
 
     def check_mqtt_connection(self) -> None:
-        if self.client.state == mqtt.MqttClient.Connected:
-            if self.root_widget.currentIndex() not in [M_ABOUT_PAGE_INDEX, M_ANIM_CONF_INDEX, M_SETTINGS_PAGE_INDEX]:
+        if self.client.state == MqttClient.Connected:
+            if self.root_widget.currentIndex() not in [
+                M_ABOUT_PAGE_INDEX,
+                M_ANIM_CONF_INDEX,
+                M_SETTINGS_PAGE_INDEX,
+            ]:
                 self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
             return
-        elif self.client.state == mqtt.MqttClient.Connecting:
+        elif self.client.state == MqttClient.Connecting:
             self.connection_timer.start()
-            self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+            self.connection_attempts_label.setText(
+                f"Connection Attempts: {self.connection_attempts}"
+            )
             self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
-        elif self.client.state == mqtt.MqttClient.ConnectError:
+        elif self.client.state == MqttClient.ConnectError:
             self.connection_timer.start()
-            self.connection_attempts_label.setText(f"Connection Failed: {self.client.result_code}")
+            self.connection_attempts_label.setText(
+                f"Connection Failed: {self.client.result_code}"
+            )
             self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
         else:
             self.client.connectToHost()
             self.connection_timer.start()
-            self.connection_attempts_label.setText(f"Connection Attempts: {self.connection_attempts}")
+            self.connection_attempts_label.setText(
+                f"Connection Attempts: {self.connection_attempts}"
+            )
             self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
 
@@ -724,34 +807,37 @@ class MainWindow(QMainWindow):
         self.client.subscribe(state_return_topic)
         self.client.subscribe(brightness_return_topic)
         self.client.subscribe(anim_return_topic)
-        self.client.subscribe(data_request_return_topic)
-        self.client.publish(data_request_topic, "request_type_full")
+        self.client.subscribe(self.settings.return_data_request_topic)
+        self.client.publish(self.settings.data_request_topic, "request_type_full")
 
     def on_client_message(self, topic: str, payload: str) -> None:
         if topic == state_return_topic:
             if payload == "ON":
                 self.led_powered = PowerStates.ON
-                self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
+                self.control_power.setIcon(icon("mdi6.power", color="#66BB6A"))
             else:
                 self.led_powered = PowerStates.OFF
-                self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+                self.control_power.setIcon(icon("mdi6.power", color="#F44336"))
 
         elif topic == brightness_return_topic:
             self.brightness_known = BrightnessStates.KNOWN
             self.brightness_value = int(payload)
             self.control_brightness_warning.setPixmap(
-                qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+                icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24))
+            )
 
         elif topic == anim_return_topic:
             if payload in list(ANIMATION_LIST.values()):
-                animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(payload)]
+                animation_name = list(ANIMATION_LIST.keys())[
+                    list(ANIMATION_LIST.values()).index(payload)
+                ]
                 self.animation_sidebar_frame.setEnabled(True)
                 self.update_animation_page(payload)
             else:
                 animation_name = "Unknown"
             self.current_animation.setText(f"Current Animation: {animation_name}")
 
-        elif topic == data_request_return_topic:
+        elif topic == self.settings.return_data_request_topic:
             try:
                 data = json.loads(payload)
             except json.JSONDecodeError:
@@ -761,14 +847,16 @@ class MainWindow(QMainWindow):
             if "state" in data:
                 if data["state"] == "ON":
                     self.led_powered = PowerStates.ON
-                    self.control_power.setIcon(qta.icon("mdi6.power", color="#66BB6A"))
+                    self.control_power.setIcon(icon("mdi6.power", color="#66BB6A"))
                 else:
                     self.led_powered = PowerStates.OFF
-                    self.control_power.setIcon(qta.icon("mdi6.power", color="#F44336"))
+                    self.control_power.setIcon(icon("mdi6.power", color="#F44336"))
 
             if "animation" in data:
                 if data["animation"] in list(ANIMATION_LIST.values()):
-                    animation_name = list(ANIMATION_LIST.keys())[list(ANIMATION_LIST.values()).index(data["animation"])]
+                    animation_name = list(ANIMATION_LIST.keys())[
+                        list(ANIMATION_LIST.values()).index(data["animation"])
+                    ]
                     self.animation_sidebar_frame.setEnabled(True)
                     self.update_animation_page(data["animation"])
                 else:
@@ -779,18 +867,25 @@ class MainWindow(QMainWindow):
                 self.control_brightness_slider.setValue(data["brightness"])
                 self.brightness_known = BrightnessStates.KNOWN
                 self.control_brightness_warning.setPixmap(
-                    qta.icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24)))
+                    icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24))
+                )
 
             if "args" in data:
-                self.animation_args = dict_to_dataclass(json.loads(data["args"]), animation_data.AnimationArgs)
-                self.anim_single_color_current.setRGB(self.animation_args.single_color.color)
+                self.animation_args = dict_to_dataclass(
+                    json.loads(data["args"]), AnimationArgs
+                )
+                self.anim_single_color_current.setRGB(
+                    self.animation_args.single_color.color
+                )
                 self.anim_fade_current_a.setRGB(self.animation_args.fade.colora)
                 self.anim_fade_current_b.setRGB(self.animation_args.fade.colorb)
                 self.anim_flash_current_a.setRGB(self.animation_args.flash.colora)
                 self.anim_flash_current_b.setRGB(self.animation_args.flash.colorb)
                 if not self.anim_grainbow_ratio.isSliderDown():
                     self.anim_grainbow_ratio.blockSignals(True)
-                    self.anim_grainbow_ratio.setValue(round(self.animation_args.glitter_rainbow.glitter_ratio * 100))
+                    self.anim_grainbow_ratio.setValue(
+                        round(self.animation_args.glitter_rainbow.glitter_ratio * 100)
+                    )
                     self.anim_grainbow_ratio.blockSignals(False)
 
                 if not self.anim_flash_speed.isSliderDown():
@@ -801,21 +896,22 @@ class MainWindow(QMainWindow):
     def toggle_led_power(self) -> None:
         if self.led_powered == PowerStates.ON:
             self.led_powered = PowerStates.UNKNOWN
-            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(state_topic, "OFF")
         elif self.led_powered == PowerStates.OFF:
             self.led_powered = PowerStates.UNKNOWN
-            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(state_topic, "ON")
         else:
             self.led_powered = PowerStates.UNKNOWN
-            self.control_power.setIcon(qta.icon("mdi6.power", color="#9EA7AA"))
+            self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
             self.client.publish(state_topic, "OFF")
 
     def update_brightness(self) -> None:
         self.brightness_known = BrightnessStates.UNKNOWN
-        self.control_brightness_warning.setPixmap(qta.icon("mdi6.alert", color="#FDD835")
-                                                  .pixmap(QSize(24, 24)))
+        self.control_brightness_warning.setPixmap(
+            icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24))
+        )
         self.client.publish(brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, anim_name: str, _) -> None:
@@ -848,7 +944,9 @@ class MainWindow(QMainWindow):
 
         unknown_anim_icon = QLabel()
         unknown_anim_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        unknown_anim_icon.setPixmap(qta.icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128))
+        unknown_anim_icon.setPixmap(
+            icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128)
+        )
         anim_layout.addWidget(unknown_anim_icon)
 
         anim_label = QLabel("This animation does not have any settings")
@@ -862,15 +960,15 @@ class MainWindow(QMainWindow):
 
     def publish_and_update_args(self, topic: str, data: str) -> None:
         self.client.publish(topic, data)
-        self.client.publish(data_request_topic, "request_type_args")
+        self.client.publish(self.settings.data_request_topic, "request_type_args")
 
-    def add_setting_sidebar_item(self, title: str, icon: str, content: QWidget):
+    def add_setting_sidebar_item(self, title: str, qta_icon: str, content: QWidget):
         i: int = len(self.settings_sidebar_items)
 
         button = QToolButton()
         button.setObjectName("sidebar_button")
         button.setText(title)
-        button.setIcon(qta.icon(icon))
+        button.setIcon(icon(qta_icon))
         button.setIconSize(QSize(24, 24))
         button.setFixedWidth(180)
         button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
@@ -913,6 +1011,54 @@ class MainWindow(QMainWindow):
 
         return frame
 
+    def generate_mqtt_topics_config_page(self):
+        frame = QFrame()
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        warning = WarningBar("A relaunch is required for these settings to apply")
+        layout.addWidget(warning)
+
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "Data Request Topic",
+                self.settings.set_data_request_topic,
+                lambda: self.settings.data_request_topic,
+                "MQTTAnimator/data_request",
+            )
+        )
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "Data Request Return Topic",
+                self.settings.set_return_data_request_topic,
+                lambda: self.settings.return_data_request_topic,
+                "MQTTAnimator/rdata_request",
+            )
+        )
+
+        return frame
+
+    def generate_topic_config_row(
+        self,
+        name: str,
+        setter: Callable[[str], Any],
+        getter: Callable[[], str],
+        default: str | None = None,
+    ):
+        layout = QHBoxLayout()
+
+        label = QLabel(name)
+        layout.addWidget(label)
+
+        control = QLineEdit()
+        if default:
+            control.setPlaceholderText(default)
+        control.setText(getter())
+        control.textChanged.connect(setter)
+        layout.addWidget(control)
+
+        return layout
+
 
 class AnimationWidget(QFrame):
     def __init__(self, title: str = "Animation"):
@@ -926,28 +1072,33 @@ class AnimationWidget(QFrame):
         self.icon = QLabel()
 
         if title == "Single Color":
-            self.icon.setPixmap(qta.icon("mdi6.moon-full", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.moon-full", color="#FFEE58").pixmap(72, 72))
         elif title == "Rainbow":
-            self.icon.setPixmap(qta.icon("ph.rainbow", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("ph.rainbow", color="#FFEE58").pixmap(72, 72))
         elif title == "Colorloop":
-            self.icon.setPixmap(qta.icon("mdi6.refresh", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.refresh", color="#FFEE58").pixmap(72, 72))
         elif title == "Fire":
-            self.icon.setPixmap(qta.icon("mdi6.fire", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.fire", color="#FFEE58").pixmap(72, 72))
         elif title == "Magic":
-            self.icon.setPixmap(qta.icon("mdi6.magic-staff", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(
+                icon("mdi6.magic-staff", color="#FFEE58").pixmap(72, 72)
+            )
         elif title == "Colored Lights":
-            self.icon.setPixmap(qta.icon("mdi6.string-lights", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(
+                icon("mdi6.string-lights", color="#FFEE58").pixmap(72, 72)
+            )
         elif title == "Flash":
-            self.icon.setPixmap(qta.icon("mdi6.flash", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.flash", color="#FFEE58").pixmap(72, 72))
         elif title == "Fade":
-            self.icon.setPixmap(qta.icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
         elif title == "Wipe":
-            self.icon.setPixmap(qta.icon("mdi6.chevron-double-right", color="#FFEE58")
-            .pixmap(72, 72))
+            self.icon.setPixmap(
+                icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72)
+            )
         elif title == "Glitter Rainbow":
-            self.icon.setPixmap(qta.icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
         else:
-            self.icon.setPixmap(qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
+            self.icon.setPixmap(icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
 
         self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.root_layout.addWidget(self.icon)
@@ -963,15 +1114,19 @@ if __name__ == "__main__":
 
     if app_custom_theme:
         if app_dark_mode:
-            qta.dark(app)
+            qtadark(app)
             with open("style.qss", "r", encoding="utf-8") as qss:
-                app.setStyleSheet(qdarktheme.load_stylesheet() + "\n" + qss.read())
-            QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
+                app.setStyleSheet(load_stylesheet() + "\n" + qss.read())
+            QFontDatabase.addApplicationFont(
+                "assets/fonts/Cabin/static/Cabin-Regular.ttf"
+            )
         else:
-            qta.light(app)
+            qtalight(app)
             with open("style.qss", "r", encoding="utf-8") as qss:
-                app.setStyleSheet(qdarktheme.load_stylesheet(theme="light") + "\n" + qss.read())
-            QFontDatabase.addApplicationFont("assets/fonts/Cabin/static/Cabin-Regular.ttf")
+                app.setStyleSheet(load_stylesheet(theme="light") + "\n" + qss.read())
+            QFontDatabase.addApplicationFont(
+                "assets/fonts/Cabin/static/Cabin-Regular.ttf"
+            )
 
     win = MainWindow(app)
     sys.exit(app.exec())

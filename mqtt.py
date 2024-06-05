@@ -1,6 +1,7 @@
 from qtpy import QtCore
 import paho.mqtt.client as mqtt
 
+
 class MqttClient(QtCore.QObject):
     Disconnected = 0
     Connecting = 1
@@ -31,19 +32,23 @@ class MqttClient(QtCore.QObject):
         self.m_hostname = ""
         self.m_port = 1883
         self.m_keepAlive = 60
-        self.m_cleanSession = True # Clean session used for non-MQTTv5
+        self.m_cleanSession = True  # Clean session used for non-MQTTv5
         self.m_protocolVersion = MqttClient.MQTT_5
 
         self.m_state = MqttClient.Disconnected
         self.m_result_code = None
 
         if self.m_protocolVersion in [MqttClient.MQTT_3_1, MqttClient.MQTT_3_1_1]:
-            self.m_client = mqtt.Client(clean_session=self.m_cleanSession,
-                                        protocol=self.protocolVersion,
-                                        callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+            self.m_client = mqtt.Client(
+                clean_session=self.m_cleanSession,
+                protocol=self.protocolVersion,
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
+            )
         elif self.m_protocolVersion in [MqttClient.MQTT_5]:
-            self.m_client = mqtt.Client(protocol=self.protocolVersion,
-                                        callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+            self.m_client = mqtt.Client(
+                protocol=self.protocolVersion,
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
+            )
 
         self.m_client.on_connect = self.on_connect
         self.m_client.on_message = self.on_message
@@ -131,7 +136,11 @@ class MqttClient(QtCore.QObject):
     def protocolVersion(self, protocolVersion):
         if self.m_protocolVersion == protocolVersion:
             return
-        if protocolVersion in (MqttClient.MQTT_3_1, MqttClient.MQTT_3_1_1, MqttClient.MQTT_5):
+        if protocolVersion in (
+            MqttClient.MQTT_3_1,
+            MqttClient.MQTT_3_1_1,
+            MqttClient.MQTT_5,
+        ):
             self.m_protocolVersion = protocolVersion
             self.protocolVersionChanged.emit(protocolVersion)
 
@@ -143,9 +152,9 @@ class MqttClient(QtCore.QObject):
     @QtCore.Slot()
     def connectToHost(self):
         if self.m_hostname:
-            self.m_client.connect_async(self.m_hostname,
-                                        port=self.port,
-                                        keepalive=self.keepAlive)
+            self.m_client.connect_async(
+                self.m_hostname, port=self.port, keepalive=self.keepAlive
+            )
 
             self.state = MqttClient.Connecting
             self.m_client.loop_start()
