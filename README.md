@@ -1,4 +1,7 @@
-# NeoPixel Animator Client
+![icon](assets/icons/icon-256.svg)
+# NeoPixel Animator Graphical  Client
+
+
 PyQt6/qtpy client for [MQTT NeoPixel animation system](https://github.com/meowmeowahr/NeoPixelAnimator)
 
 ## Features
