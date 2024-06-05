@@ -33,6 +33,16 @@ QPushButton {
     margin: 0px -24px;
 }
 
+#config_label {
+    font-family: Cabin;
+    font-size: 14px;
+}
+
+QLineEdit, QSpinBox {
+    font-family: Cabin;
+    font-size: 14px;
+}
+
 #h0 {
     font-family: Cabin;
     font-size: 30px;

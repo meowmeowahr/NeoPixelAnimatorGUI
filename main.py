@@ -987,6 +987,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(host_config_layout)
 
         host_config_label = QLabel("MQTT Broker Hostname/IP")
+        host_config_label.setObjectName("config_label")
         host_config_layout.addWidget(host_config_label)
 
         host_config = QLineEdit()
@@ -998,6 +999,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(port_config_layout)
 
         port_config_label = QLabel("MQTT Broker Port")
+        port_config_label.setObjectName("config_label")
         port_config_layout.addWidget(port_config_label)
 
         port_config = QSpinBox()
@@ -1016,77 +1018,82 @@ class MainWindow(QMainWindow):
         warning = WarningBar("A relaunch is required for these settings to fully apply")
         layout.addWidget(warning)
 
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "Data Request Topic",
-                self.settings.set_data_request_topic,
-                lambda: self.settings.data_request_topic,
-                "MQTTAnimator/data_request",
-            )
+        grid = QGridLayout()
+        layout.addLayout(grid)
+
+        self.generate_topic_config_row(
+            grid,
+            0,
+            "Data Request Topic",
+            self.settings.set_data_request_topic,
+            lambda: self.settings.data_request_topic,
+            "MQTTAnimator/data_request",
         )
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "Data Request Return Topic",
-                self.settings.set_return_data_request_topic,
-                lambda: self.settings.return_data_request_topic,
-                "MQTTAnimator/rdata_request",
-            )
+        self.generate_topic_config_row(
+            grid,
+            1,
+            "Data Request Return Topic",
+            self.settings.set_return_data_request_topic,
+            lambda: self.settings.return_data_request_topic,
+            "MQTTAnimator/rdata_request",
         )
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "State Topic",
-                self.settings.set_state_topic,
-                lambda: self.settings.state_topic,
-                "MQTTAnimator/state",
-            )
+        self.generate_topic_config_row(
+            grid,
+            2,
+            "State Topic",
+            self.settings.set_state_topic,
+            lambda: self.settings.state_topic,
+            "MQTTAnimator/state",
         )
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "State Return Topic",
-                self.settings.set_return_state_topic,
-                lambda: self.settings.return_state_topic,
-                "MQTTAnimator/rstate",
-            )
+        self.generate_topic_config_row(
+            grid,
+            3,
+            "State Return Topic",
+            self.settings.set_return_state_topic,
+            lambda: self.settings.return_state_topic,
+            "MQTTAnimator/rstate",
         )
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "Brightness Topic",
-                self.settings.set_brightness_topic,
-                lambda: self.settings.brightness_topic,
-                "MQTTAnimator/brightness",
-            )
+        self.generate_topic_config_row(
+            grid,
+            4,
+            "Brightness Topic",
+            self.settings.set_brightness_topic,
+            lambda: self.settings.brightness_topic,
+            "MQTTAnimator/brightness",
         )
-        layout.addLayout(
-            self.generate_topic_config_row(
-                "Brightness Return Topic",
-                self.settings.set_return_brightness_topic,
-                lambda: self.settings.return_brightness_topic,
-                "MQTTAnimator/rbrightness",
-            )
+        self.generate_topic_config_row(
+            grid,
+            5,
+            "Brightness Return Topic",
+            self.settings.set_return_brightness_topic,
+            lambda: self.settings.return_brightness_topic,
+            "MQTTAnimator/rbrightness",
         )
 
         return frame
 
     @staticmethod
     def generate_topic_config_row(
+            grid: QGridLayout,
+            vpos: int,
             name: str,
             setter: Callable[[str], Any],
             getter: Callable[[], str],
             default: str | None = None,
     ):
-        layout = QHBoxLayout()
-
         label = QLabel(name)
-        layout.addWidget(label)
+        label.setObjectName("config_label")
 
         control = QLineEdit()
         if default:
             control.setPlaceholderText(default)
         control.setText(getter())
         control.textChanged.connect(setter)
-        layout.addWidget(control)
 
-        return layout
+        grid.addWidget(label, vpos, 0)
+        grid.addWidget(control, vpos, 1)
+
+        return label, control
 
 
 class AnimationWidget(QFrame):
