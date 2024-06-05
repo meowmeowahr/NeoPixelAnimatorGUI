@@ -80,7 +80,6 @@ brightness_topic: str = mqtt_topics.get("brightness_topic", "MQTTAnimator/bright
 args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
 animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
 
-state_return_topic: str = mqtt_topics.get("return_state_topic", "MQTTAnimator/rstate")
 anim_return_topic: str = mqtt_topics.get("return_anim_topic", "MQTTAnimator/ranimation")
 brightness_return_topic: str = mqtt_topics.get(
     "return_brightness_topic", "MQTTAnimator/rbrightness"
@@ -804,14 +803,14 @@ class MainWindow(QMainWindow):
             self.connection_attempts += 1
 
     def on_client_connect(self) -> None:
-        self.client.subscribe(state_return_topic)
+        self.client.subscribe(self.settings.return_state_topic)
         self.client.subscribe(brightness_return_topic)
         self.client.subscribe(anim_return_topic)
         self.client.subscribe(self.settings.return_data_request_topic)
         self.client.publish(self.settings.data_request_topic, "request_type_full")
 
     def on_client_message(self, topic: str, payload: str) -> None:
-        if topic == state_return_topic:
+        if topic == self.settings.return_state_topic:
             if payload == "ON":
                 self.led_powered = PowerStates.ON
                 self.control_power.setIcon(icon("mdi6.power", color="#66BB6A"))
