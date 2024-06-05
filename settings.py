@@ -96,3 +96,15 @@ class SettingsManager:
 
     def set_brightness_topic(self, new_value: str):
         self.brightness_topic = new_value
+
+    @property
+    def return_brightness_topic(self) -> str:
+        return self.qsettings.value("mqtt/topics/return_brightness_topic", "MQTTAnimator/rbrightness", str)  # type: ignore
+
+    @return_brightness_topic.setter
+    def return_brightness_topic(self, new_value: str):
+        self.qsettings.setValue("mqtt/topics/return_brightness_topic", new_value)
+        logger.info(f"Set value of mqtt/topics/return_brightness_topic ot {new_value}")
+
+    def set_return_brightness_topic(self, new_value: str):
+        self.return_brightness_topic = new_value

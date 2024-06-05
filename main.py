@@ -80,9 +80,6 @@ args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
 animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
 
 anim_return_topic: str = mqtt_topics.get("return_anim_topic", "MQTTAnimator/ranimation")
-brightness_return_topic: str = mqtt_topics.get(
-    "return_brightness_topic", "MQTTAnimator/rbrightness"
-)
 
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
@@ -803,7 +800,7 @@ class MainWindow(QMainWindow):
 
     def on_client_connect(self) -> None:
         self.client.subscribe(self.settings.return_state_topic)
-        self.client.subscribe(brightness_return_topic)
+        self.client.subscribe(self.settings.return_brightness_topic)
         self.client.subscribe(anim_return_topic)
         self.client.subscribe(self.settings.return_data_request_topic)
         self.client.publish(self.settings.data_request_topic, "request_type_full")
@@ -817,7 +814,7 @@ class MainWindow(QMainWindow):
                 self.led_powered = PowerStates.OFF
                 self.control_power.setIcon(icon("mdi6.power", color="#F44336"))
 
-        elif topic == brightness_return_topic:
+        elif topic == self.settings.return_brightness_topic:
             self.brightness_known = BrightnessStates.KNOWN
             self.brightness_value = int(payload)
             self.control_brightness_warning.setPixmap(
@@ -1055,6 +1052,14 @@ class MainWindow(QMainWindow):
                 self.settings.set_brightness_topic,
                 lambda: self.settings.brightness_topic,
                 "MQTTAnimator/brightness",
+            )
+        )
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "Brightness Return Topic",
+                self.settings.set_return_brightness_topic,
+                lambda: self.settings.return_brightness_topic,
+                "MQTTAnimator/rbrightness",
             )
         )
 
