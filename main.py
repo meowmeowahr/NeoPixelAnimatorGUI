@@ -271,19 +271,16 @@ class MainWindow(QMainWindow):
 
         self.control_title = QLabel(application_title)
         self.control_title.setObjectName("h2")
-        self.control_top_bar.addWidget(self.control_title)
+        self.control_title.setFixedWidth(self.control_title.minimumSizeHint().width())
 
-        self.control_top_bar.addStretch()
+        print(self.control_title.width())
 
         self.control_power = QPushButton()
         self.control_power.setFlat(True)
         self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
-        self.control_power.setIconSize(QSize(56, 56))
-        self.control_power.setFixedSize(self.control_power.minimumSizeHint())
+        self.control_power.setIconSize(QSize(72, 72))
+        self.control_power.setFixedSize(QSize(72, 72))
         self.control_power.clicked.connect(self.toggle_led_power)
-        self.control_top_bar.addWidget(self.control_power)
-
-        self.control_top_bar.addStretch()
 
         self.control_about = QPushButton()
         self.control_about.setFlat(True)
@@ -291,7 +288,6 @@ class MainWindow(QMainWindow):
         self.control_about.setIconSize(QSize(24, 24))
         self.control_about.clicked.connect(self.show_about)
         self.control_about.setFixedWidth(self.control_about.minimumSizeHint().height())
-        self.control_top_bar.addWidget(self.control_about)
 
         self.control_settings = QPushButton()
         self.control_settings.setFlat(True)
@@ -301,7 +297,21 @@ class MainWindow(QMainWindow):
         self.control_settings.setFixedWidth(
             self.control_settings.minimumSizeHint().height()
         )
+
+        self.control_top_bar.addWidget(self.control_title)
+        self.control_top_bar.addStretch()
+        self.control_top_bar.addWidget(self.control_power)
+        # this is to evenly center the power control
+        # gets size of title widget and subtracts width of about and settings buttons
+        # accounts for layout spacing and paddings
+        # results in a perfectly center power control
+        self.control_top_bar.addSpacing((self.control_title.width() - (
+                    self.control_about.width() + self.control_settings.width() + (self.control_top_bar.spacing() * 2))))
+        self.control_top_bar.addStretch()
+        self.control_top_bar.addWidget(self.control_about)
         self.control_top_bar.addWidget(self.control_settings)
+
+        print(self.control_about.width() + self.control_settings.width())
 
         self.control_brightness_box = QGroupBox("Brightness")
         self.control_layout.addWidget(self.control_brightness_box)
@@ -1155,12 +1165,12 @@ if __name__ == "__main__":
             qtadark(app)
             with open("style.qss", "r", encoding="utf-8") as qss:
                 app.setStyleSheet(load_stylesheet(custom_colors={
-        "[dark]": {
-            "primary": "#F44336",
-            "background": "#000A12",
-            "border": "#263238",
-        }
-    }) + "\n" + qss.read())
+                    "[dark]": {
+                        "primary": "#F44336",
+                        "background": "#000A12",
+                        "border": "#263238",
+                    }
+                }) + "\n" + qss.read())
             QFontDatabase.addApplicationFont(
                 "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
             )
