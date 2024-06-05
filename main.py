@@ -263,6 +263,7 @@ class MainWindow(QMainWindow):
         self.connection_timer.setInterval(1000)
         self.connection_timer.timeout.connect(self.check_mqtt_connection)
         self.connection_timer.start()
+        self.check_mqtt_connection()
 
         # Control
         self.control_widget = QWidget()
