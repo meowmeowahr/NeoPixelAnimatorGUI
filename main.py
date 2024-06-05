@@ -800,6 +800,15 @@ class MainWindow(QMainWindow):
         )
         self.anim_wipe_layout.addWidget(self.anim_wipe_speed)
 
+        # Random / Random Color
+        self.anim_config_stack.insertWidget(
+            A_RANDOM_INDEX, self.generate_animation_config_unavailable()
+        )
+
+        self.anim_config_stack.insertWidget(
+            A_RANDOM_COLOR_INDEX, self.generate_animation_config_unavailable()
+        )
+
         # Application settings
         self.settings_widget = QWidget()
         self.root_widget.insertWidget(M_SETTINGS_PAGE_INDEX, self.settings_widget)
