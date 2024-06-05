@@ -283,6 +283,8 @@ class MainWindow(QMainWindow):
         self.control_power.clicked.connect(self.toggle_led_power)
         self.control_top_bar.addWidget(self.control_power)
 
+        self.control_top_bar.addStretch()
+
         self.control_about = QPushButton()
         self.control_about.setFlat(True)
         self.control_about.setIcon(icon("mdi6.information-slab-circle"))
