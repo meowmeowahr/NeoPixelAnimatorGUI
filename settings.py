@@ -71,3 +71,16 @@ class SettingsManager:
     def set_state_topic(self, new_value: str):
         self.state_topic = new_value
 
+    @property
+    def return_state_topic(self) -> str:
+        return self.qsettings.value("mqtt/topics/return_state_topic", "MQTTAnimator/rstate", str) # type: ignore
+    
+    @return_state_topic.setter
+    def return_state_topic(self, new_value: str):
+        self.qsettings.setValue("mqtt/topics/return_state_topic", "MQTTAnimator/rstate")
+        logger.info(f"Set value of mqtt/topics/return_state_topic to {new_value}")
+
+    def set_return_state_topic(self, new_value: str):
+        self.return_state_topic = new_value
+
+

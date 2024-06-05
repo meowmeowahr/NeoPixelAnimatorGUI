@@ -118,11 +118,11 @@ class MqttClient(QtCore.QObject):
         self.keepAliveChanged.emit(keepAlive)
 
     @QtCore.Property(bool, notify=cleanSessionChanged)
-    def cleanSession(self):
+    def clean_session(self):
         return self.m_cleanSession
 
-    @cleanSession.setter
-    def cleanSession(self, cleanSession):
+    @clean_session.setter
+    def clean_session(self, cleanSession):
         if self.m_cleanSession == cleanSession:
             return
         self.m_cleanSession = cleanSession

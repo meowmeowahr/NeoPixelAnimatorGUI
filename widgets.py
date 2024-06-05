@@ -4,21 +4,21 @@ from qtpy.QtCore import Qt
 from enum import Enum
 
 
-class Serverity(Enum):
+class Severity(Enum):
     SEVERE = 0
     WARN = 1
 
 
 class WarningBar(QFrame):
-    def __init__(self, text="", closeable=False, severity=Serverity.WARN) -> None:
+    def __init__(self, text="", closeable=False, severity=Severity.WARN) -> None:
         super(WarningBar, self).__init__()
 
         self.closeable: bool = closeable
 
         self.setFrameShape(QFrame.Shape.Box)
-        if severity == Serverity.SEVERE:
+        if severity == Severity.SEVERE:
             self.setStyleSheet("background-color: #ef5350;")
-        elif severity == Serverity.WARN:
+        elif severity == Severity.WARN:
             self.setStyleSheet("background-color: #ffc107;")
         self.setMinimumHeight(48)
 
@@ -29,7 +29,7 @@ class WarningBar(QFrame):
         # self.__text.setStyleSheet("font-weight: bold;")
         self._text.setObjectName("warning_bar_text")
         self._text.setProperty(
-            "severity", "warn" if severity == Serverity.WARN else "severe"
+            "severity", "warn" if severity == Severity.WARN else "severe"
         )
         self._text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._layout.addWidget(self._text)

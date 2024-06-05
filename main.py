@@ -172,7 +172,7 @@ def hex_to_rgb(hexa: str) -> tuple:
     Returns:
         tuple: RGB color
     """
-    return tuple(int(hexa[i : i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(hexa[i: i + 2], 16) for i in (0, 2, 4))
 
 
 def dict_to_dataclass(data_dict, dataclass_type):
@@ -750,7 +750,7 @@ class MainWindow(QMainWindow):
         self.settings_sidebar_layout = QVBoxLayout()
         self.settings_sidebar_widget.setLayout(self.settings_sidebar_layout)
 
-        self.settings_sidebar_items: list[QWidget] = []
+        self.settings_sidebar_items: list[QToolButton] = []
 
         self.settings_pages = QStackedWidget()
         self.settings_side_by_side.addWidget(self.settings_pages)
@@ -962,7 +962,7 @@ class MainWindow(QMainWindow):
         self.client.publish(topic, data)
         self.client.publish(self.settings.data_request_topic, "request_type_args")
 
-    def add_setting_sidebar_item(self, title: str, qta_icon: str, content: QWidget):
+    def add_setting_sidebar_item(self, title: str, qta_icon: str, content: QWidget | QFrame):
         i: int = len(self.settings_sidebar_items)
 
         button = QToolButton()
@@ -1043,15 +1043,23 @@ class MainWindow(QMainWindow):
                 "MQTTAnimator/state",
             )
         )
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "State Return Topic",
+                self.settings.set_return_state_topic,
+                lambda: self.settings.return_state_topic,
+                "MQTTAnimator/rstate",
+            )
+        )
 
         return frame
 
+    @staticmethod
     def generate_topic_config_row(
-        self,
-        name: str,
-        setter: Callable[[str], Any],
-        getter: Callable[[], str],
-        default: str | None = None,
+            name: str,
+            setter: Callable[[str], Any],
+            getter: Callable[[], str],
+            default: str | None = None,
     ):
         layout = QHBoxLayout()
 
