@@ -74,9 +74,8 @@ mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
 
 gui_config: dict = configuration.get("gui", {})
 
-client_id = f"mqtt-animator-{randint(0, 1000)}"
+client_id: str = f"mqtt-animator-{randint(0, 1000)}"
 
-brightness_topic: str = mqtt_topics.get("brightness_topic", "MQTTAnimator/brightness")
 args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
 animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
 
@@ -131,7 +130,7 @@ A_WIPE_INDEX = 10
 A_RANDOM_INDEX = 11
 A_RANDOM_COLOR_INDEX = 12
 
-ANIMATION_CONF_INDEXES = {
+ANIMATION_CONF_INDEXES: dict[str, int] = {
     "SingleColor": A_SINGLE_COLOR_INDEX,
     "Rainbow": A_RAINBOW_INDEX,
     "GlitterRainbow": A_GLITTER_RAINBOW_INDEX,
@@ -911,7 +910,7 @@ class MainWindow(QMainWindow):
         self.control_brightness_warning.setPixmap(
             icon("mdi6.alert", color="#FDD835").pixmap(QSize(24, 24))
         )
-        self.client.publish(brightness_topic, self.control_brightness_slider.value())
+        self.client.publish(self.settings.brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, anim_name: str, _) -> None:
         self.animation_sidebar_frame.setEnabled(False)
@@ -1015,7 +1014,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         frame.setLayout(layout)
 
-        warning = WarningBar("A relaunch is required for these settings to apply")
+        warning = WarningBar("A relaunch is required for these settings to fully apply")
         layout.addWidget(warning)
 
         layout.addLayout(
@@ -1048,6 +1047,14 @@ class MainWindow(QMainWindow):
                 self.settings.set_return_state_topic,
                 lambda: self.settings.return_state_topic,
                 "MQTTAnimator/rstate",
+            )
+        )
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "Brightness Topic",
+                self.settings.set_brightness_topic,
+                lambda: self.settings.brightness_topic,
+                "MQTTAnimator/brightness",
             )
         )
 
