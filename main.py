@@ -355,7 +355,7 @@ class MainWindow(QMainWindow):
         self.control_animation_list = []
         for idx, key in enumerate(ANIMATION_LIST.keys()):
             widget = AnimationWidget(key)
-            widget.mousePressEvent = partial(self.set_animation, key)  # type: ignore
+            widget.mouseReleaseEvent = partial(self.set_animation, key)  # type: ignore
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
@@ -723,6 +723,83 @@ class MainWindow(QMainWindow):
         )
         self.anim_flash_layout.addWidget(self.anim_flash_speed)
 
+        # Wipe config
+        self.anim_wipe_widget = QWidget()
+        self.anim_config_stack.insertWidget(A_WIPE_INDEX, self.anim_wipe_widget)
+
+        self.anim_wipe_layout = QHBoxLayout()
+        self.anim_wipe_widget.setLayout(self.anim_wipe_layout)
+
+        self.anim_wipe_a_layout = QVBoxLayout()
+        self.anim_wipe_layout.addLayout(self.anim_wipe_a_layout)
+
+        self.anim_wipe_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_wipe_palette_a.selected.connect(
+            lambda c: self.publish_and_update_args(
+                args_topic, f'wipe,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
+        )
+        self.anim_wipe_a_layout.addWidget(self.anim_wipe_palette_a)
+
+        self.anim_wipe_a_bottom_layout = QHBoxLayout()
+        self.anim_wipe_a_layout.addLayout(self.anim_wipe_a_bottom_layout)
+
+        self.anim_wipe_a_bottom_layout.addStretch()
+
+        self.anim_wipe_current_a_label = QLabel("Current")
+        self.anim_wipe_current_a_label.setObjectName("h2")
+        self.anim_wipe_a_bottom_layout.addWidget(self.anim_wipe_current_a_label)
+
+        self.anim_wipe_current_a = ColorBlock()
+        self.anim_wipe_current_a.setFixedHeight(32)
+        self.anim_wipe_a_bottom_layout.addWidget(self.anim_wipe_current_a)
+
+        self.anim_wipe_a_bottom_layout.addStretch()
+
+        self.anim_wipe_divider = QFrame()
+        self.anim_wipe_divider.setFrameShape(QFrame.Shape.VLine)
+        self.anim_wipe_layout.addWidget(self.anim_wipe_divider)
+
+        self.anim_wipe_b_layout = QVBoxLayout()
+        self.anim_wipe_layout.addLayout(self.anim_wipe_b_layout)
+
+        self.anim_wipe_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_wipe_palette_b.selected.connect(
+            lambda c: self.publish_and_update_args(
+                args_topic, f'wipe,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+            )
+        )
+        self.anim_wipe_b_layout.addWidget(self.anim_wipe_palette_b)
+
+        self.anim_wipe_b_bottom_layout = QHBoxLayout()
+        self.anim_wipe_b_layout.addLayout(self.anim_wipe_b_bottom_layout)
+
+        self.anim_wipe_b_bottom_layout.addStretch()
+
+        self.anim_wipe_current_b_label = QLabel("Current")
+        self.anim_wipe_current_b_label.setObjectName("h2")
+        self.anim_wipe_b_bottom_layout.addWidget(self.anim_wipe_current_b_label)
+
+        self.anim_wipe_current_b = ColorBlock()
+        self.anim_wipe_current_b.setFixedHeight(32)
+        self.anim_wipe_b_bottom_layout.addWidget(self.anim_wipe_current_b)
+
+        self.anim_wipe_b_bottom_layout.addStretch()
+
+        self.anim_wipe_speed = QSlider()
+        self.anim_wipe_speed.setRange(1, 5)
+        self.anim_wipe_speed.valueChanged.connect(
+            lambda: self.publish_and_update_args(
+                args_topic, f'wipe,{{"leds_iter": ' f"{self.anim_wipe_speed.value()}}}"
+            )
+        )
+        self.anim_wipe_speed.sliderReleased.connect(
+            lambda: self.publish_and_update_args(
+                args_topic, f'wipe,{{"speed": ' f"{self.anim_wipe_speed.value()}}}"
+            )
+        )
+        self.anim_wipe_layout.addWidget(self.anim_wipe_speed)
+
         # Application settings
         self.settings_widget = QWidget()
         self.root_widget.insertWidget(M_SETTINGS_PAGE_INDEX, self.settings_widget)
@@ -884,6 +961,8 @@ class MainWindow(QMainWindow):
                 self.anim_fade_current_b.setRGB(self.animation_args.fade.colorb)
                 self.anim_flash_current_a.setRGB(self.animation_args.flash.colora)
                 self.anim_flash_current_b.setRGB(self.animation_args.flash.colorb)
+                self.anim_wipe_current_a.setRGB(self.animation_args.wipe.colora)
+                self.anim_wipe_current_b.setRGB(self.animation_args.wipe.colorb)
                 if not self.anim_grainbow_ratio.isSliderDown():
                     self.anim_grainbow_ratio.blockSignals(True)
                     self.anim_grainbow_ratio.setValue(
@@ -918,6 +997,7 @@ class MainWindow(QMainWindow):
         self.client.publish(self.settings.brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, anim_name: str, _) -> None:
+        print("here")
         self.animation_sidebar_frame.setEnabled(False)
         self.client.publish(animation_topic, ANIMATION_LIST[anim_name])
 
