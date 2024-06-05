@@ -273,8 +273,6 @@ class MainWindow(QMainWindow):
         self.control_title.setObjectName("h2")
         self.control_title.setFixedWidth(self.control_title.minimumSizeHint().width())
 
-        print(self.control_title.width())
-
         self.control_power = QPushButton()
         self.control_power.setFlat(True)
         self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
@@ -310,8 +308,6 @@ class MainWindow(QMainWindow):
         self.control_top_bar.addStretch()
         self.control_top_bar.addWidget(self.control_about)
         self.control_top_bar.addWidget(self.control_settings)
-
-        print(self.control_about.width() + self.control_settings.width())
 
         self.control_brightness_box = QGroupBox("Brightness")
         self.control_layout.addWidget(self.control_brightness_box)
