@@ -1,6 +1,5 @@
 mqtt:
   topics:
-    state_topic: "MQTTAnimator/state"
     return_state_topic: "MQTTAnimator/rstate"
     brightness_topic: "MQTTAnimator/brightness"
     return_brightness_topic: "MQTTAnimator/rbrightness"

@@ -76,7 +76,6 @@ gui_config: dict = configuration.get("gui", {})
 
 client_id = f"mqtt-animator-{randint(0, 1000)}"
 
-state_topic: str = mqtt_topics.get("state_topic", "MQTTAnimator/state")
 brightness_topic: str = mqtt_topics.get("brightness_topic", "MQTTAnimator/brightness")
 args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
 animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
@@ -898,15 +897,15 @@ class MainWindow(QMainWindow):
         if self.led_powered == PowerStates.ON:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
-            self.client.publish(state_topic, "OFF")
+            self.client.publish(self.settings.state_topic, "OFF")
         elif self.led_powered == PowerStates.OFF:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
-            self.client.publish(state_topic, "ON")
+            self.client.publish(self.settings.state_topic, "ON")
         else:
             self.led_powered = PowerStates.UNKNOWN
             self.control_power.setIcon(icon("mdi6.power", color="#9EA7AA"))
-            self.client.publish(state_topic, "OFF")
+            self.client.publish(self.settings.state_topic, "OFF")
 
     def update_brightness(self) -> None:
         self.brightness_known = BrightnessStates.UNKNOWN
@@ -1034,6 +1033,14 @@ class MainWindow(QMainWindow):
                 self.settings.set_return_data_request_topic,
                 lambda: self.settings.return_data_request_topic,
                 "MQTTAnimator/rdata_request",
+            )
+        )
+        layout.addLayout(
+            self.generate_topic_config_row(
+                "State Topic",
+                self.settings.set_state_topic,
+                lambda: self.settings.state_topic,
+                "MQTTAnimator/state",
             )
         )
 
