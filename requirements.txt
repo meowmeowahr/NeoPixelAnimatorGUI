@@ -1,7 +1,16 @@
+# Qt
 PySide6~=6.7.1
 QtPy~=2.4.1
-pyqtdarktheme>=0.1.6
+
+# Dark theme with Py 3.12 support
+pyqtdarktheme@git+https://github.com/woopelderly/PyQtDarkTheme/@python3.12
+
+# Qt icons
 qtawesome~=1.3.1
+
+# Mqtt client
 paho-mqtt~=2.1.0
+
+# Misc
 pyyaml~=6.0.1
 loguru~=0.7.2

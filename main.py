@@ -977,6 +977,7 @@ class MainWindow(QMainWindow):
 
     def generate_mqtt_server_config_page(self):
         frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.Box)
         layout = QVBoxLayout()
         frame.setLayout(layout)
 
@@ -1012,6 +1013,7 @@ class MainWindow(QMainWindow):
 
     def generate_mqtt_topics_config_page(self):
         frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.Box)
         layout = QVBoxLayout()
         frame.setLayout(layout)
 
@@ -1140,7 +1142,7 @@ class AnimationWidget(QFrame):
         self.root_layout.addWidget(self.icon)
 
         self.title = QLabel(title)
-        self.title.setObjectName("h3")
+        self.title.setObjectName("h4")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.root_layout.addWidget(self.title)
 
@@ -1152,16 +1154,22 @@ if __name__ == "__main__":
         if app_dark_mode:
             qtadark(app)
             with open("style.qss", "r", encoding="utf-8") as qss:
-                app.setStyleSheet(load_stylesheet() + "\n" + qss.read())
+                app.setStyleSheet(load_stylesheet(custom_colors={
+        "[dark]": {
+            "primary": "#F44336",
+            "background": "#000A12",
+            "border": "#263238",
+        }
+    }) + "\n" + qss.read())
             QFontDatabase.addApplicationFont(
-                "assets/fonts/Cabin/static/Cabin-Regular.ttf"
+                "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
             )
         else:
             qtalight(app)
             with open("style.qss", "r", encoding="utf-8") as qss:
                 app.setStyleSheet(load_stylesheet(theme="light") + "\n" + qss.read())
             QFontDatabase.addApplicationFont(
-                "assets/fonts/Cabin/static/Cabin-Regular.ttf"
+                "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
             )
 
     win = MainWindow(app)

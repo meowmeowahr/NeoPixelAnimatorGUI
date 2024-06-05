@@ -1,5 +1,5 @@
 * {
-    font-family: Cabin;
+    font-family: Roboto;
 }
 
 QPushButton {
@@ -34,42 +34,42 @@ QPushButton {
 }
 
 #config_label {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 14px;
 }
 
 QLineEdit, QSpinBox {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 14px;
 }
 
 #h0 {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 30px;
 }
 
 #h1 {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 28px;
 }
 
 #h2 {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 22px;
 }
 
 #h3 {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 18px;
 }
 
 #h4 {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 14px;
 }
 
 #sidebar_button {
-    font-family: Cabin;
+    font-family: Roboto;
     font-size: 16px;
 }
 
