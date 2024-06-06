@@ -1,6 +1,13 @@
+from enum import Enum
+
 from qtpy.QtCore import QSettings
 from loguru import logger
 
+
+class CursorSetting(Enum):
+    DEFAULT = 0
+    NONE = 1
+    BLOB = 2
 
 class SettingsManager:
     def __init__(self) -> None:
@@ -10,7 +17,7 @@ class SettingsManager:
     @property
     def mqtt_host(self) -> str:
         value = self.qsettings.value("mqtt/host", "localhost", str)  # type: ignore
-        return value if value else "localhost"
+        return value if value else "localhost" # type: ignore
 
     @mqtt_host.setter
     def mqtt_host(self, new_value: str):
@@ -35,7 +42,7 @@ class SettingsManager:
     @property
     def data_request_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/data_request_topic", "MQTTAnimator/data_request", str)  # type: ignore
-        return value if value else "MQTTAnimator/data_request"
+        return value if value else "MQTTAnimator/data_request" # type: ignore
 
     @data_request_topic.setter
     def data_request_topic(self, new_value: str):
@@ -49,7 +56,7 @@ class SettingsManager:
     def return_data_request_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/return_data_request_topic", "MQTTAnimator/rdata_request",
                                      str)  # type: ignore
-        return value if value else "MQTTAnimator/rdata_request"
+        return value if value else "MQTTAnimator/rdata_request" # type: ignore
 
     @return_data_request_topic.setter
     def return_data_request_topic(self, new_value: str):
@@ -62,7 +69,7 @@ class SettingsManager:
     @property
     def state_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/state_topic", "MQTTAnimator/state", str)  # type: ignore
-        return value if value else "MQTTAnimator/state"
+        return value if value else "MQTTAnimator/state" # type: ignore
 
     @state_topic.setter
     def state_topic(self, new_value: str):
@@ -75,7 +82,7 @@ class SettingsManager:
     @property
     def return_state_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/return_state_topic", "MQTTAnimator/rstate", str)  # type: ignore
-        return value if value else "MQTTAnimator/rstate"
+        return value if value else "MQTTAnimator/rstate" # type: ignore
 
     @return_state_topic.setter
     def return_state_topic(self, new_value: str):
@@ -88,7 +95,7 @@ class SettingsManager:
     @property
     def brightness_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/brightness_topic", "MQTTAnimator/brightness", str)  # type: ignore
-        return value if value else "MQTTAnimator/brightness"
+        return value if value else "MQTTAnimator/brightness" # type: ignore
 
     @brightness_topic.setter
     def brightness_topic(self, new_value: str):
@@ -102,7 +109,7 @@ class SettingsManager:
     def return_brightness_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/return_brightness_topic", "MQTTAnimator/rbrightness",
                                      str)  # type: ignore
-        return value if value else "MQTTAnimator/rbrightness"
+        return value if value else "MQTTAnimator/rbrightness" # type: ignore
 
     @return_brightness_topic.setter
     def return_brightness_topic(self, new_value: str):
@@ -115,7 +122,7 @@ class SettingsManager:
     @property
     def args_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/args_topic", "MQTTAnimator/args", str)  # type: ignore
-        return value if value else "MQTTAnimator/args"
+        return value if value else "MQTTAnimator/args" # type: ignore
 
     @args_topic.setter
     def args_topic(self, new_value: str):
@@ -128,7 +135,7 @@ class SettingsManager:
     @property
     def animation_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/animation_topic", "MQTTAnimator/animation", str)  # type: ignore
-        return value if value else "MQTTAnimator/animation"
+        return value if value else "MQTTAnimator/animation" # type: ignore
 
     @animation_topic.setter
     def animation_topic(self, new_value: str):
@@ -141,7 +148,7 @@ class SettingsManager:
     @property
     def return_anim_topic(self) -> str:
         value = self.qsettings.value("mqtt/topics/return_anim_topic", "MQTTAnimator/ranimation", str)  # type: ignore
-        return value if value else "MQTTAnimator/ranimation"
+        return value if value else "MQTTAnimator/ranimation" # type: ignore
 
     @return_anim_topic.setter
     def return_anim_topic(self, new_value: str):
@@ -150,3 +157,16 @@ class SettingsManager:
 
     def set_return_anim_topic(self, new_value: str):
         self.return_anim_topic = new_value
+
+    @property
+    def cursor_style(self) -> CursorSetting:
+        value = self.qsettings.value("app/cursor", CursorSetting.DEFAULT.value, int)  # type: ignore
+        return CursorSetting(value) if value else CursorSetting.DEFAULT # type: ignore
+
+    @cursor_style.setter
+    def cursor_style(self, new_value: CursorSetting):
+        self.qsettings.setValue("app/cursor", new_value.value)
+        logger.info(f"Set value of app/cursor to {new_value}")
+
+    def set_cursor_style(self, new_value: CursorSetting):
+        self.cursor_style = new_value

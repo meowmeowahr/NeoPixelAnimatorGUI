@@ -35,9 +35,10 @@ from qtpy.QtWidgets import (
     QToolButton,
     QLineEdit,
     QSpinBox,
+    QRadioButton,
 )
 from qtpy.QtCore import Qt, QSize, QTimer
-from qtpy.QtGui import QPixmap, QIcon, QFontDatabase, QMouseEvent
+from qtpy.QtGui import QPixmap, QIcon, QFontDatabase, QMouseEvent, QCursor
 from qdarktheme import load_stylesheet
 from qtawesome import icon
 from qtawesome import dark as qtadark
@@ -48,7 +49,7 @@ from palette import PaletteGrid, PALETTES
 
 from animation_data import AnimationArgs
 from mqtt import MqttClient
-from settings import SettingsManager
+from settings import SettingsManager, CursorSetting
 
 __version__ = "0.1.0"
 
@@ -869,7 +870,14 @@ class MainWindow(QMainWindow):
             "mdi6.slash-forward-box",
             self.generate_mqtt_topics_config_page(),
         )
+        self.add_setting_sidebar_item(
+            "Application Style",
+            "mdi6.application-variable",
+            self.generate_gui_config_page(),
+        )
 
+
+        self.set_cursor()
         if app_fullscreen:
             self.showFullScreen()
         else:
@@ -1213,6 +1221,47 @@ class MainWindow(QMainWindow):
 
         return frame
 
+    def generate_gui_config_page(self):
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.Box)
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        cursor_config_layout = QHBoxLayout()
+        layout.addLayout(cursor_config_layout)
+
+        cursor_config_label = QLabel("Cursor")
+        cursor_config_layout.addWidget(cursor_config_label)
+
+        cursor_system_radio = QRadioButton("System")
+        cursor_system_radio.clicked.connect(lambda: self.set_cursor(CursorSetting.DEFAULT))
+        cursor_config_layout.addWidget(cursor_system_radio)
+
+        cursor_none_radio = QRadioButton("None")
+        cursor_none_radio.clicked.connect(lambda: self.set_cursor(CursorSetting.NONE))
+        cursor_config_layout.addWidget(cursor_none_radio)
+
+        cursor_blob_radio = QRadioButton("Blob")
+        cursor_blob_radio.clicked.connect(lambda: self.set_cursor(CursorSetting.BLOB))
+        cursor_config_layout.addWidget(cursor_blob_radio)
+
+        cursor_system_radio.blockSignals(True)
+        cursor_none_radio.blockSignals(True)
+        cursor_blob_radio.blockSignals(True)
+
+        if self.settings.cursor_style == CursorSetting.DEFAULT:
+            cursor_system_radio.setChecked(True)
+        elif self.settings.cursor_style == CursorSetting.NONE:
+            cursor_none_radio.setChecked(True)
+        elif self.settings.cursor_style == CursorSetting.BLOB:
+            cursor_blob_radio.setChecked(True)
+
+        cursor_system_radio.blockSignals(False)
+        cursor_none_radio.blockSignals(False)
+        cursor_blob_radio.blockSignals(False)
+
+        return frame
+
     @staticmethod
     def generate_topic_config_row(
             grid: QGridLayout,
@@ -1245,6 +1294,20 @@ class MainWindow(QMainWindow):
     def on_settings_click(self, _: QMouseEvent):
         if not self.settings_pages.isEnabled():
             self.settings_lock.flash_outline()
+
+    def set_cursor(self, cursor: CursorSetting | None = None, set_radios: bool = False):
+        if cursor:
+            self.settings.cursor_style = cursor
+        else:
+            cursor = self.settings.cursor_style
+
+        if cursor == CursorSetting.DEFAULT:
+            app.restoreOverrideCursor()
+            app.restoreOverrideCursor()
+        elif cursor == CursorSetting.NONE:
+            app.setOverrideCursor(Qt.CursorShape.BlankCursor)
+        elif cursor == CursorSetting.BLOB:
+            app.setOverrideCursor(QCursor(QPixmap("assets/cursors/blob.png")))
 
     def restart(self):
         self.deleteLater()
