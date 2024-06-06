@@ -35,6 +35,7 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QSpinBox,
     QRadioButton,
+    QCheckBox
 )
 from qtpy.QtCore import Qt, QSize, QTimer
 from qtpy.QtGui import QPixmap, QIcon, QFontDatabase, QMouseEvent, QCursor
@@ -197,6 +198,9 @@ class MainWindow(QMainWindow):
 
         # Settings Manager
         self.settings = SettingsManager()
+
+        # Theme
+        self.set_custom_theming(self.settings.custom_theming)
 
         # Mqtt Client
         self.client = MqttClient()
@@ -1201,6 +1205,9 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         frame.setLayout(layout)
 
+        warning = WarningBar("Restast the app for some settings to fully apply")
+        layout.addWidget(warning)
+
         cursor_config_layout = QHBoxLayout()
         layout.addLayout(cursor_config_layout)
 
@@ -1246,6 +1253,17 @@ class MainWindow(QMainWindow):
         cursor_none_radio.blockSignals(False)
         cursor_blob_radio.blockSignals(False)
 
+        custom_theme_layout = QHBoxLayout()
+        layout.addLayout(custom_theme_layout)
+
+        custom_theme_label = QLabel("Enable Theming (recommended)")
+        custom_theme_layout.addWidget(custom_theme_label)
+
+        custom_theme_check = QCheckBox("Custom Theming")
+        custom_theme_check.setChecked(self.settings.custom_theming)
+        custom_theme_check.clicked.connect(self.set_custom_theming)
+        custom_theme_layout.addWidget(custom_theme_check)
+
         return frame
 
     def lock_settings(self):
@@ -1276,6 +1294,34 @@ class MainWindow(QMainWindow):
         self.settings.set_app_title(title)
         self.control_title.setText(title)
 
+    def set_custom_theming(self, enable: bool = True):
+        if self.settings.custom_theming != enable:
+            self.settings.custom_theming = enable
+
+        if enable:
+            if app_dark_mode:
+                qtadark(app)
+                with open("style.qss", "r", encoding="utf-8") as qss:
+                    app.setStyleSheet(load_stylesheet(custom_colors={
+                        "[dark]": {
+                            "primary": "#F44336",
+                            "background": "#000912",
+                            "border": "#263238",
+                        }
+                    }) + "\n" + qss.read())
+                QFontDatabase.addApplicationFont(
+                    "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
+                )
+            else:
+                qtalight(app)
+                with open("style.qss", "r", encoding="utf-8") as qss:
+                    app.setStyleSheet(load_stylesheet(theme="light") + "\n" + qss.read())
+                QFontDatabase.addApplicationFont(
+                    "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
+                )
+        else:
+            app.setStyleSheet("");
+
     def restart(self):
         self.deleteLater()
         logger.info("Application restarting")
@@ -1284,28 +1330,5 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    if app_custom_theme:
-        if app_dark_mode:
-            qtadark(app)
-            with open("style.qss", "r", encoding="utf-8") as qss:
-                app.setStyleSheet(load_stylesheet(custom_colors={
-                    "[dark]": {
-                        "primary": "#F44336",
-                        "background": "#000912",
-                        "border": "#263238",
-                    }
-                }) + "\n" + qss.read())
-            QFontDatabase.addApplicationFont(
-                "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
-            )
-        else:
-            qtalight(app)
-            with open("style.qss", "r", encoding="utf-8") as qss:
-                app.setStyleSheet(load_stylesheet(theme="light") + "\n" + qss.read())
-            QFontDatabase.addApplicationFont(
-                "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
-            )
-
     win = MainWindow(app)
     sys.exit(app.exec())

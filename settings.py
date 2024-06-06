@@ -183,3 +183,16 @@ class SettingsManager:
 
     def set_app_title(self, new_value: str):
         self.app_title = new_value
+
+    @property
+    def custom_theming(self) -> bool:
+        value = self.qsettings.value("app/custom_theming", True, bool)  # type: ignore
+        return value if value else True # type: ignore
+
+    @custom_theming.setter
+    def custom_theming(self, new_value: bool):
+        self.qsettings.setValue("app/custom_theming", new_value)
+        logger.info(f"Set value of app/custom_theming to {new_value}")
+
+    def set_custom_theming(self, new_value: bool):
+        self.custom_theming = new_value
