@@ -1295,7 +1295,7 @@ class MainWindow(QMainWindow):
         if not self.settings_pages.isEnabled():
             self.settings_lock.flash_outline()
 
-    def set_cursor(self, cursor: CursorSetting | None = None, set_radios: bool = False):
+    def set_cursor(self, cursor: CursorSetting | None = None):
         if cursor:
             self.settings.cursor_style = cursor
         else:
