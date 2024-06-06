@@ -1,5 +1,5 @@
-from qtpy.QtWidgets import QFrame, QLabel, QHBoxLayout, QPushButton, QMessageBox
-from qtpy.QtCore import Qt, Signal, Slot, QSize, QTimer
+from qtpy.QtWidgets import QFrame, QLabel, QHBoxLayout, QPushButton, QMessageBox, QVBoxLayout
+from qtpy.QtCore import Qt, Signal, QSize, QTimer
 from qtpy.QtGui import QMouseEvent, QPainter, QPen, QColor
 
 from enum import Enum
@@ -49,7 +49,7 @@ class LockButton(QPushButton):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.warning_text = None
+        self.warning_text = "Are you sure you want to unlock?"
         self.checked = False
 
         self.setFlat(True)
@@ -140,3 +140,51 @@ class ColorBlock(QFrame):
         """
         color_str = rgb_to_hex(rgb)
         self.setStyleSheet(f"background-color: #{color_str};")
+
+class AnimationWidget(QFrame):
+    def __init__(self, title: str = "Animation"):
+        super().__init__()
+        self.setFrameShape(QFrame.Shape.Box)
+        self.setMinimumWidth(160)
+
+        self.root_layout = QVBoxLayout()
+        self.setLayout(self.root_layout)
+
+        self.icon = QLabel()
+
+        if title == "Single Color":
+            self.icon.setPixmap(_qta.icon("mdi6.moon-full", color="#FFEE58").pixmap(72, 72))
+        elif title == "Rainbow":
+            self.icon.setPixmap(_qta.icon("ph.rainbow", color="#FFEE58").pixmap(72, 72))
+        elif title == "Colorloop":
+            self.icon.setPixmap(_qta.icon("mdi6.refresh", color="#FFEE58").pixmap(72, 72))
+        elif title == "Fire":
+            self.icon.setPixmap(_qta.icon("mdi6.fire", color="#FFEE58").pixmap(72, 72))
+        elif title == "Magic":
+            self.icon.setPixmap(
+                _qta.icon("mdi6.magic-staff", color="#FFEE58").pixmap(72, 72)
+            )
+        elif title == "Colored Lights":
+            self.icon.setPixmap(
+                _qta.icon("mdi6.string-lights", color="#FFEE58").pixmap(72, 72)
+            )
+        elif title == "Flash":
+            self.icon.setPixmap(_qta.icon("mdi6.flash", color="#FFEE58").pixmap(72, 72))
+        elif title == "Fade":
+            self.icon.setPixmap(_qta.icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
+        elif title == "Wipe":
+            self.icon.setPixmap(
+                _qta.icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72)
+            )
+        elif title == "Glitter Rainbow":
+            self.icon.setPixmap(_qta.icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
+        else:
+            self.icon.setPixmap(_qta.icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
+
+        self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.root_layout.addWidget(self.icon)
+
+        self.title = QLabel(title)
+        self.title.setObjectName("h4")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.root_layout.addWidget(self.title)

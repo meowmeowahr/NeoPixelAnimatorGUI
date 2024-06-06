@@ -13,7 +13,6 @@ import sys
 from traceback import print_exc
 from loguru import logger
 from platform import system
-from typing import Any, Callable
 
 from yaml import safe_load, YAMLError
 
@@ -44,7 +43,8 @@ from qtawesome import icon
 from qtawesome import dark as qtadark
 from qtawesome import light as qtalight
 
-from widgets import WarningBar, ColorBlock, LockButton
+from widgets import WarningBar, ColorBlock, LockButton, AnimationWidget
+from gui_generators import generate_animation_config_unavailable, generate_topic_config_row
 from palette import PaletteGrid, PALETTES
 
 from animation_data import AnimationArgs
@@ -526,7 +526,7 @@ class MainWindow(QMainWindow):
 
         # Rainbow Conf
         self.anim_config_stack.insertWidget(
-            A_RAINBOW_INDEX, self.generate_animation_config_unavailable()
+            A_RAINBOW_INDEX, generate_animation_config_unavailable()
         )
 
         # Glitter Rainbow Conf
@@ -565,22 +565,22 @@ class MainWindow(QMainWindow):
 
         # Colorloop Conf
         self.anim_config_stack.insertWidget(
-            A_COLORLOOP_INDEX, self.generate_animation_config_unavailable()
+            A_COLORLOOP_INDEX, generate_animation_config_unavailable()
         )
 
         # Magic Conf
         self.anim_config_stack.insertWidget(
-            A_MAGIC_INDEX, self.generate_animation_config_unavailable()
+            A_MAGIC_INDEX, generate_animation_config_unavailable()
         )
 
         # Fire Conf
         self.anim_config_stack.insertWidget(
-            A_FIRE_INDEX, self.generate_animation_config_unavailable()
+            A_FIRE_INDEX, generate_animation_config_unavailable()
         )
 
         # Colored Lights Conf
         self.anim_config_stack.insertWidget(
-            A_COLORED_LIGHTS_INDEX, self.generate_animation_config_unavailable()
+            A_COLORED_LIGHTS_INDEX, generate_animation_config_unavailable()
         )
 
         # Fade config
@@ -802,11 +802,11 @@ class MainWindow(QMainWindow):
 
         # Random / Random Color
         self.anim_config_stack.insertWidget(
-            A_RANDOM_INDEX, self.generate_animation_config_unavailable()
+            A_RANDOM_INDEX, generate_animation_config_unavailable()
         )
 
         self.anim_config_stack.insertWidget(
-            A_RANDOM_COLOR_INDEX, self.generate_animation_config_unavailable()
+            A_RANDOM_COLOR_INDEX, generate_animation_config_unavailable()
         )
 
         # Application settings
@@ -1053,31 +1053,6 @@ class MainWindow(QMainWindow):
         else:
             self.anim_config_stack.setCurrentIndex(A_UNKNOWN_INDEX)
 
-    @staticmethod
-    def generate_animation_config_unavailable() -> QWidget:
-        anim_widget = QWidget()
-
-        anim_layout = QVBoxLayout()
-        anim_widget.setLayout(anim_layout)
-
-        anim_layout.addStretch()
-
-        unknown_anim_icon = QLabel()
-        unknown_anim_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        unknown_anim_icon.setPixmap(
-            icon("mdi6.alert-circle", color="#FDD835").pixmap(128, 128)
-        )
-        anim_layout.addWidget(unknown_anim_icon)
-
-        anim_label = QLabel("This animation does not have any settings")
-        anim_label.setObjectName("h1")
-        anim_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        anim_layout.addWidget(anim_label)
-
-        anim_layout.addStretch()
-
-        return anim_widget
-
     def publish_and_update_args(self, topic: str, data: str) -> None:
         self.client.publish(topic, data)
         self.client.publish(self.settings.data_request_topic, "request_type_args")
@@ -1146,7 +1121,7 @@ class MainWindow(QMainWindow):
         grid = QGridLayout()
         layout.addLayout(grid)
 
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             0,
             "Data Request Topic",
@@ -1154,7 +1129,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.data_request_topic,
             "MQTTAnimator/data_request",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             1,
             "Data Request Return Topic",
@@ -1162,7 +1137,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.return_data_request_topic,
             "MQTTAnimator/rdata_request",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             2,
             "State Topic",
@@ -1170,7 +1145,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.state_topic,
             "MQTTAnimator/state",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             3,
             "State Return Topic",
@@ -1178,7 +1153,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.return_state_topic,
             "MQTTAnimator/rstate",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             4,
             "Brightness Topic",
@@ -1186,7 +1161,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.brightness_topic,
             "MQTTAnimator/brightness",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             5,
             "Brightness Return Topic",
@@ -1194,7 +1169,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.return_brightness_topic,
             "MQTTAnimator/rbrightness",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             6,
             "Args Topic",
@@ -1202,7 +1177,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.args_topic,
             "MQTTAnimator/args",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             7,
             "Animation Topic",
@@ -1210,7 +1185,7 @@ class MainWindow(QMainWindow):
             lambda: self.settings.animation_topic,
             "MQTTAnimator/animation",
         )
-        self.generate_topic_config_row(
+        generate_topic_config_row(
             grid,
             8,
             "Animation Return Topic",
@@ -1262,29 +1237,6 @@ class MainWindow(QMainWindow):
 
         return frame
 
-    @staticmethod
-    def generate_topic_config_row(
-            grid: QGridLayout,
-            vpos: int,
-            name: str,
-            setter: Callable[[str], Any],
-            getter: Callable[[], str],
-            default: str | None = None,
-    ):
-        label = QLabel(name)
-        label.setObjectName("config_label")
-
-        control = QLineEdit()
-        if default:
-            control.setPlaceholderText(default)
-        control.setText(getter())
-        control.textChanged.connect(setter)
-
-        grid.addWidget(label, vpos, 0)
-        grid.addWidget(control, vpos, 1)
-
-        return label, control
-
     def lock_settings(self):
         self.settings_pages.setEnabled(False)
 
@@ -1313,55 +1265,6 @@ class MainWindow(QMainWindow):
         self.deleteLater()
         logger.info("Application restarting")
         MainWindow.singleton = MainWindow(app)
-
-
-class AnimationWidget(QFrame):
-    def __init__(self, title: str = "Animation"):
-        super().__init__()
-        self.setFrameShape(QFrame.Shape.Box)
-        self.setMinimumWidth(160)
-
-        self.root_layout = QVBoxLayout()
-        self.setLayout(self.root_layout)
-
-        self.icon = QLabel()
-
-        if title == "Single Color":
-            self.icon.setPixmap(icon("mdi6.moon-full", color="#FFEE58").pixmap(72, 72))
-        elif title == "Rainbow":
-            self.icon.setPixmap(icon("ph.rainbow", color="#FFEE58").pixmap(72, 72))
-        elif title == "Colorloop":
-            self.icon.setPixmap(icon("mdi6.refresh", color="#FFEE58").pixmap(72, 72))
-        elif title == "Fire":
-            self.icon.setPixmap(icon("mdi6.fire", color="#FFEE58").pixmap(72, 72))
-        elif title == "Magic":
-            self.icon.setPixmap(
-                icon("mdi6.magic-staff", color="#FFEE58").pixmap(72, 72)
-            )
-        elif title == "Colored Lights":
-            self.icon.setPixmap(
-                icon("mdi6.string-lights", color="#FFEE58").pixmap(72, 72)
-            )
-        elif title == "Flash":
-            self.icon.setPixmap(icon("mdi6.flash", color="#FFEE58").pixmap(72, 72))
-        elif title == "Fade":
-            self.icon.setPixmap(icon("mdi6.transition", color="#FFEE58").pixmap(72, 72))
-        elif title == "Wipe":
-            self.icon.setPixmap(
-                icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72)
-            )
-        elif title == "Glitter Rainbow":
-            self.icon.setPixmap(icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))
-        else:
-            self.icon.setPixmap(icon("mdi6.auto-fix", color="#FFEE58").pixmap(72, 72))
-
-        self.icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.root_layout.addWidget(self.icon)
-
-        self.title = QLabel(title)
-        self.title.setObjectName("h4")
-        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.root_layout.addWidget(self.title)
 
 
 if __name__ == "__main__":
