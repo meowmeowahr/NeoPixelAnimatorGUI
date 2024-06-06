@@ -1,5 +1,4 @@
 gui:
-  title: "NeoPixel Animator"
   custom_theming: true
   dark_mode: true
   fullscreen: false

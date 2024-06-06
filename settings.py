@@ -170,3 +170,16 @@ class SettingsManager:
 
     def set_cursor_style(self, new_value: CursorSetting):
         self.cursor_style = new_value
+
+    @property
+    def app_title(self) -> str:
+        value = self.qsettings.value("app/title", "NeoPixel Animator", str)  # type: ignore
+        return value if value else "NeoPixel Animator" # type: ignore
+
+    @app_title.setter
+    def app_title(self, new_value: str):
+        self.qsettings.setValue("app/title", new_value)
+        logger.info(f"Set value of app/title to {new_value}")
+
+    def set_app_title(self, new_value: str):
+        self.app_title = new_value

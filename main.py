@@ -77,7 +77,6 @@ gui_config: dict = configuration.get("gui", {})
 
 client_id: str = f"mqtt-animator-{randint(0, 1000)}"
 
-application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
 app_custom_theme: bool = gui_config.get("custom_theming", True)
 app_dark_mode: bool = gui_config.get("dark_mode", True)
@@ -269,7 +268,7 @@ class MainWindow(QMainWindow):
         self.control_top_bar = QHBoxLayout()
         self.control_layout.addLayout(self.control_top_bar)
 
-        self.control_title = QLabel(application_title)
+        self.control_title = QLabel(self.settings.app_title)
         self.control_title.setObjectName("h2")
         self.control_title.setFixedWidth(self.control_title.minimumSizeHint().width())
 
@@ -1224,6 +1223,18 @@ class MainWindow(QMainWindow):
         cursor_none_radio.blockSignals(True)
         cursor_blob_radio.blockSignals(True)
 
+        textbox_grid = QGridLayout()
+        layout.addLayout(textbox_grid)
+
+        generate_topic_config_row(
+            textbox_grid,
+            0,
+            "App Title",
+            self.set_title,
+            lambda: self.settings.app_title,
+            "NeoPixel Animator"
+        )
+
         if self.settings.cursor_style == CursorSetting.DEFAULT:
             cursor_system_radio.setChecked(True)
         elif self.settings.cursor_style == CursorSetting.NONE:
@@ -1260,6 +1271,10 @@ class MainWindow(QMainWindow):
             app.setOverrideCursor(Qt.CursorShape.BlankCursor)
         elif cursor == CursorSetting.BLOB:
             app.setOverrideCursor(QCursor(QPixmap("assets/cursors/blob.png")))
+
+    def set_title(self, title: str):
+        self.settings.set_app_title(title)
+        self.control_title.setText(title)
 
     def restart(self):
         self.deleteLater()
