@@ -1,6 +1,8 @@
 from qtpy import QtCore
 import paho.mqtt.client as mqtt
 
+from loguru import logger
+
 
 class MqttClient(QtCore.QObject):
     Disconnected = 0
@@ -94,6 +96,7 @@ class MqttClient(QtCore.QObject):
             return
         self.m_hostname = hostname
         self.hostnameChanged.emit(hostname)
+        logger.info(f"MQTT Broker host has been set to {hostname}")
 
     @QtCore.Property(int, notify=portChanged)
     def port(self):
@@ -105,6 +108,7 @@ class MqttClient(QtCore.QObject):
             return
         self.m_port = port
         self.portChanged.emit(port)
+        logger.info(f"MQTT Broker port has been set to {port}")
 
     @QtCore.Property(int, notify=keepAliveChanged)
     def keepAlive(self):

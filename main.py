@@ -37,13 +37,13 @@ from qtpy.QtWidgets import (
     QSpinBox,
 )
 from qtpy.QtCore import Qt, QSize, QTimer
-from qtpy.QtGui import QPixmap, QIcon, QFontDatabase
+from qtpy.QtGui import QPixmap, QIcon, QFontDatabase, QMouseEvent
 from qdarktheme import load_stylesheet
 from qtawesome import icon
 from qtawesome import dark as qtadark
 from qtawesome import light as qtalight
 
-from widgets import WarningBar, ColorBlock
+from widgets import WarningBar, ColorBlock, LockButton
 from palette import PaletteGrid, PALETTES
 
 from animation_data import AnimationArgs
@@ -75,11 +75,6 @@ mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
 gui_config: dict = configuration.get("gui", {})
 
 client_id: str = f"mqtt-animator-{randint(0, 1000)}"
-
-args_topic: str = mqtt_topics.get("args_topic", "MQTTAnimator/args")
-animation_topic: str = mqtt_topics.get("animation_topic", "MQTTAnimator/animation")
-
-anim_return_topic: str = mqtt_topics.get("return_anim_topic", "MQTTAnimator/ranimation")
 
 application_title: str = gui_config.get("title", "NeoPixel Animator")
 app_fullscreen: bool = gui_config.get("fullscreen", False)
@@ -253,6 +248,10 @@ class MainWindow(QMainWindow):
         self.connection_attempts_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_layout.addWidget(self.connection_attempts_label)
 
+        self.connection_settings_button = QPushButton("Access Settings")
+        self.connection_settings_button.clicked.connect(self.show_settings)
+        self.connection_layout.addWidget(self.connection_settings_button)
+
         self.connection_timer = QTimer(self)
         self.connection_timer.setInterval(1000)
         self.connection_timer.timeout.connect(self.check_mqtt_connection)
@@ -302,7 +301,7 @@ class MainWindow(QMainWindow):
         # this is to evenly center the power control
         # gets size of title widget and subtracts width of about and settings buttons
         # accounts for layout spacing and paddings
-        # results in a perfectly center power control
+        # results in a perfectly centered power control
         self.control_top_bar.addSpacing((self.control_title.width() - (
                     self.control_about.width() + self.control_settings.width() + (self.control_top_bar.spacing() * 2))))
         self.control_top_bar.addStretch()
@@ -502,7 +501,7 @@ class MainWindow(QMainWindow):
         self.anim_single_color_palette = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_single_color_palette.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic,
+                self.settings.args_topic,
                 f'single_color,{{"color": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}",
             )
         )
@@ -549,13 +548,13 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_ratio.setRange(1, 50)
         self.anim_grainbow_ratio.valueChanged.connect(
             lambda: self.publish_and_update_args(
-                args_topic,
+                self.settings.args_topic,
                 f'glitter_rainbow,{{"glitter_ratio": {self.anim_grainbow_ratio.value() / 100}}}',
             )
         )
         self.anim_grainbow_ratio.sliderReleased.connect(
             lambda: self.publish_and_update_args(
-                args_topic,
+                self.settings.args_topic,
                 f'glitter_rainbow,{{"glitter_ratio": {self.anim_grainbow_ratio.value() / 100}}}',
             )
         )
@@ -596,7 +595,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_fade_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'fade,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'fade,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_fade_a_layout.addWidget(self.anim_fade_palette_a)
@@ -626,7 +625,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_fade_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'fade,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'fade,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_fade_b_layout.addWidget(self.anim_fade_palette_b)
@@ -659,7 +658,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_flash_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'flash,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'flash,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_flash_a_layout.addWidget(self.anim_flash_palette_a)
@@ -689,7 +688,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_flash_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'flash,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'flash,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_flash_b_layout.addWidget(self.anim_flash_palette_b)
@@ -713,12 +712,12 @@ class MainWindow(QMainWindow):
         self.anim_flash_speed.setRange(3, 50)
         self.anim_flash_speed.valueChanged.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
+                self.settings.args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
             )
         )
         self.anim_flash_speed.sliderReleased.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
+                self.settings.args_topic, f'flash,{{"speed": ' f"{self.anim_flash_speed.value()}}}"
             )
         )
         self.anim_flash_layout.addWidget(self.anim_flash_speed)
@@ -736,7 +735,7 @@ class MainWindow(QMainWindow):
         self.anim_wipe_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_wipe_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'wipe,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'wipe,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_wipe_a_layout.addWidget(self.anim_wipe_palette_a)
@@ -766,7 +765,7 @@ class MainWindow(QMainWindow):
         self.anim_wipe_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
         self.anim_wipe_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
-                args_topic, f'wipe,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
+                self.settings.args_topic, f'wipe,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
             )
         )
         self.anim_wipe_b_layout.addWidget(self.anim_wipe_palette_b)
@@ -790,12 +789,12 @@ class MainWindow(QMainWindow):
         self.anim_wipe_speed.setRange(1, 5)
         self.anim_wipe_speed.valueChanged.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f'wipe,{{"leds_iter": ' f"{self.anim_wipe_speed.value()}}}"
+                self.settings.args_topic, f'wipe,{{"leds_iter": ' f"{self.anim_wipe_speed.value()}}}"
             )
         )
         self.anim_wipe_speed.sliderReleased.connect(
             lambda: self.publish_and_update_args(
-                args_topic, f'wipe,{{"speed": ' f"{self.anim_wipe_speed.value()}}}"
+                self.settings.args_topic, f'wipe,{{"speed": ' f"{self.anim_wipe_speed.value()}}}"
             )
         )
         self.anim_wipe_layout.addWidget(self.anim_wipe_speed)
@@ -826,9 +825,24 @@ class MainWindow(QMainWindow):
         self.settings_back.clicked.connect(
             lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
         )
-        self.settings_top_bar.addWidget(self.settings_back)
 
+        self.settings_restart = QPushButton()
+        self.settings_restart.setFlat(True)
+        self.settings_restart.setIcon(icon("mdi6.restart"))
+        self.settings_restart.setIconSize(QSize(48, 48))
+        self.settings_restart.clicked.connect(self.restart)
+
+        self.settings_lock = LockButton()
+        self.settings_lock.set_warning_text(
+            "Changing these settings may result in the system to stop functioning. Do you want to unlock the settings?")
+        self.settings_lock.locked.connect(self.lock_settings)
+        self.settings_lock.unlocked.connect(self.unlock_settings)
+
+        self.settings_top_bar.addWidget(self.settings_back)
         self.settings_top_bar.addStretch()
+        self.settings_top_bar.addWidget(self.settings_restart)
+        self.settings_top_bar.addStretch()
+        self.settings_top_bar.addWidget(self.settings_lock)
 
         self.settings_side_by_side = QHBoxLayout()
         self.settings_root_layout.addLayout(self.settings_side_by_side)
@@ -842,6 +856,7 @@ class MainWindow(QMainWindow):
         self.settings_sidebar_items: list[QToolButton] = []
 
         self.settings_pages = QStackedWidget()
+        self.settings_pages.setEnabled(False)
         self.settings_side_by_side.addWidget(self.settings_pages)
 
         self.add_setting_sidebar_item(
@@ -874,7 +889,11 @@ class MainWindow(QMainWindow):
             self.connection_attempts_label.setText(
                 f"Connection Attempts: {self.connection_attempts}"
             )
-            self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
+            if self.root_widget.currentIndex() not in [
+                M_ABOUT_PAGE_INDEX,
+                M_SETTINGS_PAGE_INDEX,
+            ]:
+                self.root_widget.setCurrentIndex(M_CONNECTION_WIDGET_INDEX)
             self.connection_attempts += 1
         elif self.client.state == MqttClient.ConnectError:
             self.connection_timer.start()
@@ -895,7 +914,7 @@ class MainWindow(QMainWindow):
     def on_client_connect(self) -> None:
         self.client.subscribe(self.settings.return_state_topic)
         self.client.subscribe(self.settings.return_brightness_topic)
-        self.client.subscribe(anim_return_topic)
+        self.client.subscribe(self.settings.return_anim_topic)
         self.client.subscribe(self.settings.return_data_request_topic)
         self.client.publish(self.settings.data_request_topic, "request_type_full")
 
@@ -915,7 +934,7 @@ class MainWindow(QMainWindow):
                 icon("mdi6.check-circle", color="#66BB6A").pixmap(QSize(24, 24))
             )
 
-        elif topic == anim_return_topic:
+        elif topic == self.settings.return_anim_topic:
             if payload in list(ANIMATION_LIST.values()):
                 animation_name = list(ANIMATION_LIST.keys())[
                     list(ANIMATION_LIST.values()).index(payload)
@@ -1006,15 +1025,16 @@ class MainWindow(QMainWindow):
         self.client.publish(self.settings.brightness_topic, self.control_brightness_slider.value())
 
     def set_animation(self, anim_name: str, _) -> None:
-        print("here")
         self.animation_sidebar_frame.setEnabled(False)
-        self.client.publish(animation_topic, ANIMATION_LIST[anim_name])
+        self.client.publish(self.settings.animation_topic, ANIMATION_LIST[anim_name])
 
     def show_about(self) -> None:
         self.root_widget.setCurrentIndex(M_ABOUT_PAGE_INDEX)
 
     def show_settings(self) -> None:
         self.root_widget.setCurrentIndex(M_SETTINGS_PAGE_INDEX)
+        if not self.settings_pages.isEnabled():
+            self.settings_lock.flash_outline()
 
     def anim_conf(self) -> None:
         self.root_widget.setCurrentIndex(M_ANIM_CONF_INDEX)
@@ -1166,6 +1186,30 @@ class MainWindow(QMainWindow):
             lambda: self.settings.return_brightness_topic,
             "MQTTAnimator/rbrightness",
         )
+        self.generate_topic_config_row(
+            grid,
+            6,
+            "Args Topic",
+            self.settings.set_args_topic,
+            lambda: self.settings.args_topic,
+            "MQTTAnimator/args",
+        )
+        self.generate_topic_config_row(
+            grid,
+            7,
+            "Animation Topic",
+            self.settings.set_animation_topic,
+            lambda: self.settings.animation_topic,
+            "MQTTAnimator/animation",
+        )
+        self.generate_topic_config_row(
+            grid,
+            8,
+            "Animation Return Topic",
+            self.settings.set_return_anim_topic,
+            lambda: self.settings.return_anim_topic,
+            "MQTTAnimator/ranimation",
+        )
 
         return frame
 
@@ -1191,6 +1235,21 @@ class MainWindow(QMainWindow):
         grid.addWidget(control, vpos, 1)
 
         return label, control
+
+    def lock_settings(self):
+        self.settings_pages.setEnabled(False)
+
+    def unlock_settings(self):
+        self.settings_pages.setEnabled(True)
+
+    def on_settings_click(self, _: QMouseEvent):
+        if not self.settings_pages.isEnabled():
+            self.settings_lock.flash_outline()
+
+    def restart(self):
+        self.deleteLater()
+        logger.info("Application restarting")
+        MainWindow.singleton = MainWindow(app)
 
 
 class AnimationWidget(QFrame):
@@ -1252,7 +1311,7 @@ if __name__ == "__main__":
                 app.setStyleSheet(load_stylesheet(custom_colors={
                     "[dark]": {
                         "primary": "#F44336",
-                        "background": "#000A12",
+                        "background": "#000912",
                         "border": "#263238",
                     }
                 }) + "\n" + qss.read())
