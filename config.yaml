@@ -1,5 +1,4 @@
 gui:
-  dark_mode: true
   fullscreen: false
   fixed_size:
     enabled: false

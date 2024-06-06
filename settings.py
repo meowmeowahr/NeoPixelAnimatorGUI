@@ -187,7 +187,7 @@ class SettingsManager:
     @property
     def custom_theming(self) -> bool:
         value = self.qsettings.value("app/custom_theming", True, bool)  # type: ignore
-        return value if value else True # type: ignore
+        return value # type: ignore
 
     @custom_theming.setter
     def custom_theming(self, new_value: bool):
@@ -196,3 +196,17 @@ class SettingsManager:
 
     def set_custom_theming(self, new_value: bool):
         self.custom_theming = new_value
+
+    @property
+    def dark_mode(self) -> bool:
+        value = self.qsettings.value("app/dark_mode", True, bool)  # type: ignore
+        print("v" + str(value))
+        return value # type: ignore
+
+    @dark_mode.setter
+    def dark_mode(self, new_value: bool):
+        self.qsettings.setValue("app/dark_mode", new_value)
+        logger.info(f"Set value of app/dark_mode to {new_value}")
+
+    def set_dark_mode(self, new_value: bool):
+        self.dark_mode = new_value

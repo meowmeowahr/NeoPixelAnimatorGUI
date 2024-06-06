@@ -79,8 +79,6 @@ gui_config: dict = configuration.get("gui", {})
 client_id: str = f"mqtt-animator-{randint(0, 1000)}"
 
 app_fullscreen: bool = gui_config.get("fullscreen", False)
-app_custom_theme: bool = gui_config.get("custom_theming", True)
-app_dark_mode: bool = gui_config.get("dark_mode", True)
 
 fixed_size_config: dict = gui_config.get("fixed_size", {})
 
@@ -1264,6 +1262,18 @@ class MainWindow(QMainWindow):
         custom_theme_check.clicked.connect(self.set_custom_theming)
         custom_theme_layout.addWidget(custom_theme_check)
 
+
+        dark_mode_layout = QHBoxLayout()
+        layout.addLayout(dark_mode_layout)
+
+        dark_mode_label = QLabel("Enable Dark Mode")
+        dark_mode_layout.addWidget(dark_mode_label)
+
+        dark_mode_check = QCheckBox("Dark Mode")
+        dark_mode_check.setChecked(self.settings.dark_mode)
+        dark_mode_check.clicked.connect(self.set_dark_mode)
+        dark_mode_layout.addWidget(dark_mode_check)
+
         return frame
 
     def lock_settings(self):
@@ -1298,8 +1308,10 @@ class MainWindow(QMainWindow):
         if self.settings.custom_theming != enable:
             self.settings.custom_theming = enable
 
+        print(self.settings.dark_mode)
+
         if enable:
-            if app_dark_mode:
+            if self.settings.dark_mode:
                 qtadark(app)
                 with open("style.qss", "r", encoding="utf-8") as qss:
                     app.setStyleSheet(load_stylesheet(custom_colors={
@@ -1320,7 +1332,11 @@ class MainWindow(QMainWindow):
                     "assets/fonts/Roboto/Roboto/Roboto-Regular.ttf"
                 )
         else:
-            app.setStyleSheet("");
+            app.setStyleSheet("")
+
+    def set_dark_mode(self, enable: bool = True):
+        self.settings.dark_mode = enable
+        self.set_custom_theming(self.settings.custom_theming)
 
     def restart(self):
         self.deleteLater()
