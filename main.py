@@ -10,11 +10,8 @@ from functools import partial
 import json
 from random import randint
 import sys
-from traceback import print_exc
 from loguru import logger
 from platform import system
-
-from yaml import safe_load, YAMLError
 
 from qtpy.QtWidgets import (
     QApplication,
@@ -61,30 +58,7 @@ if system() == "Windows":
         f"meowmeowahr.npanimator.client.{__version__}"
     )
 
-# Import yaml config
-with open("config.yaml", "r", encoding="utf-8") as stream:
-    try:
-        configuration = safe_load(stream)
-    except YAMLError as exc:
-        print_exc()
-        logger.critical("YAML Parsing Error, %s", exc)
-        sys.exit(0)
-
-mqtt_config: dict = configuration.get("mqtt", {})
-mqtt_topics: dict = mqtt_config.get("topics", {})
-mqtt_reconnection: dict = mqtt_config.get("reconnection", {})
-
-gui_config: dict = configuration.get("gui", {})
-
 client_id: str = f"mqtt-animator-{randint(0, 1000)}"
-
-app_fullscreen: bool = gui_config.get("fullscreen", False)
-
-fixed_size_config: dict = gui_config.get("fixed_size", {})
-
-fixed_size_enabled: bool = fixed_size_config.get("enabled", False)
-fixed_size_width: int = fixed_size_config.get("width", 1024)
-fixed_size_height: int = fixed_size_config.get("height", 600)
 
 ANIMATION_LIST: dict[str, str] = {
     "Single Color": "SingleColor",
@@ -218,9 +192,6 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
-
-        if fixed_size_enabled:
-            self.setFixedSize(QSize(fixed_size_width, fixed_size_height))
 
         self.root_widget = QStackedWidget()
         self.setCentralWidget(self.root_widget)
@@ -879,7 +850,7 @@ class MainWindow(QMainWindow):
 
 
         self.set_cursor()
-        if app_fullscreen:
+        if self.settings.fullscreen:
             self.showFullScreen()
         else:
             self.show()
@@ -1251,28 +1222,35 @@ class MainWindow(QMainWindow):
         cursor_none_radio.blockSignals(False)
         cursor_blob_radio.blockSignals(False)
 
-        custom_theme_layout = QHBoxLayout()
-        layout.addLayout(custom_theme_layout)
+        check_grid = QGridLayout()
+        layout.addLayout(check_grid)
 
         custom_theme_label = QLabel("Enable Theming (recommended)")
-        custom_theme_layout.addWidget(custom_theme_label)
+        check_grid.addWidget(custom_theme_label, 0, 0)
 
         custom_theme_check = QCheckBox("Custom Theming")
         custom_theme_check.setChecked(self.settings.custom_theming)
         custom_theme_check.clicked.connect(self.set_custom_theming)
-        custom_theme_layout.addWidget(custom_theme_check)
-
-
-        dark_mode_layout = QHBoxLayout()
-        layout.addLayout(dark_mode_layout)
+        check_grid.addWidget(custom_theme_check, 0, 1)
 
         dark_mode_label = QLabel("Enable Dark Mode (only if above option is checked)")
-        dark_mode_layout.addWidget(dark_mode_label)
+        check_grid.addWidget(dark_mode_label, 1, 0)
 
         dark_mode_check = QCheckBox("Dark Mode")
         dark_mode_check.setChecked(self.settings.dark_mode)
         dark_mode_check.clicked.connect(self.set_dark_mode)
-        dark_mode_layout.addWidget(dark_mode_check)
+        check_grid.addWidget(dark_mode_check, 1, 1)
+
+        dark_mode_layout = QHBoxLayout()
+        layout.addLayout(dark_mode_layout)
+
+        fullscreen_label = QLabel("Always show app in fullscreen")
+        check_grid.addWidget(fullscreen_label, 2, 0)
+
+        fullscreen_check = QCheckBox("Fullscreen")
+        fullscreen_check.setChecked(self.settings.fullscreen)
+        fullscreen_check.clicked.connect(self.set_fullscreen)
+        check_grid.addWidget(fullscreen_check, 2, 1)
 
         return frame
 
@@ -1335,6 +1313,16 @@ class MainWindow(QMainWindow):
     def set_dark_mode(self, enable: bool = True):
         self.settings.dark_mode = enable
         self.set_custom_theming(self.settings.custom_theming)
+
+    def set_fullscreen(self, enable: bool = False):
+        self.settings.fullscreen = enable
+        if enable:
+            self.showFullScreen()
+        else:
+            if self.isFullScreen():
+                self.showNormal()
+                return
+            self.show()
 
     def restart(self):
         self.deleteLater()

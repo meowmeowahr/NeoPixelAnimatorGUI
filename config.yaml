@@ -1,6 +1,0 @@
-gui:
-  fullscreen: false
-  fixed_size:
-    enabled: false
-    width: 1024
-    height: 600

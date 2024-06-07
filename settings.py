@@ -200,7 +200,6 @@ class SettingsManager:
     @property
     def dark_mode(self) -> bool:
         value = self.qsettings.value("app/dark_mode", True, bool)  # type: ignore
-        print("v" + str(value))
         return value # type: ignore
 
     @dark_mode.setter
@@ -210,3 +209,16 @@ class SettingsManager:
 
     def set_dark_mode(self, new_value: bool):
         self.dark_mode = new_value
+
+    @property
+    def fullscreen(self) -> bool:
+        value = self.qsettings.value("app/fullscreen", False, bool)  # type: ignore
+        return value # type: ignore
+
+    @fullscreen.setter
+    def fullscreen(self, new_value: bool):
+        self.qsettings.setValue("app/fullscreen", new_value)
+        logger.info(f"Set value of app/fullscreen to {new_value}")
+
+    def set_fullscreen(self, new_value: bool):
+        self.fullscreen = new_value
