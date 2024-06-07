@@ -1174,7 +1174,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         frame.setLayout(layout)
 
-        warning = WarningBar("Restast the app for some settings to fully apply")
+        warning = WarningBar("Restart the app for title to fully apply")
         layout.addWidget(warning)
 
         cursor_config_layout = QHBoxLayout()
