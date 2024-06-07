@@ -307,19 +307,19 @@ class MainWindow(QMainWindow):
         self.animation_layout = QHBoxLayout()
         self.control_layout.addLayout(self.animation_layout)
 
-        self.control_animatior_scroll = QScrollArea()
-        self.control_animatior_scroll.setWidgetResizable(True)
-        self.control_animatior_scroll.setVerticalScrollBarPolicy(
+        self.control_animator_scroll = QScrollArea()
+        self.control_animator_scroll.setWidgetResizable(True)
+        self.control_animator_scroll.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
         QScroller.grabGesture(
-            self.control_animatior_scroll,
+            self.control_animator_scroll,
             QScroller.ScrollerGestureType.LeftMouseButtonGesture,
         )
-        self.animation_layout.addWidget(self.control_animatior_scroll)
+        self.animation_layout.addWidget(self.control_animator_scroll)
 
         self.control_animator_widget = QWidget()
-        self.control_animatior_scroll.setWidget(self.control_animator_widget)
+        self.control_animator_scroll.setWidget(self.control_animator_widget)
 
         self.control_animator_layout = QGridLayout()
         self.control_animator_widget.setLayout(self.control_animator_layout)
