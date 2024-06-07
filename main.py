@@ -49,7 +49,7 @@ from animation_data import AnimationArgs
 from mqtt import MqttClient
 from settings import SettingsManager, CursorSetting
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 if system() == "Windows":
     import ctypes
