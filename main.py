@@ -1266,7 +1266,7 @@ class MainWindow(QMainWindow):
         dark_mode_layout = QHBoxLayout()
         layout.addLayout(dark_mode_layout)
 
-        dark_mode_label = QLabel("Enable Dark Mode")
+        dark_mode_label = QLabel("Enable Dark Mode (only if above option is checked)")
         dark_mode_layout.addWidget(dark_mode_label)
 
         dark_mode_check = QCheckBox("Dark Mode")
@@ -1307,8 +1307,6 @@ class MainWindow(QMainWindow):
     def set_custom_theming(self, enable: bool = True):
         if self.settings.custom_theming != enable:
             self.settings.custom_theming = enable
-
-        print(self.settings.dark_mode)
 
         if enable:
             if self.settings.dark_mode:
