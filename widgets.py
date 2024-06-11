@@ -128,18 +128,19 @@ class ColorBlock(QFrame):
 
         self.setMaximumSize(128, 128)
 
-    def setColor(self, color: str) -> None:
+    def set_color(self, color: str) -> None:
         """
         Sets the color of the widget
         """
         self.setStyleSheet(f"background-color: {color};")
 
-    def setRGB(self, rgb):
+    def set_rgb(self, rgb):
         """
         Sets the color of the widget in (r, g, b)
         """
         color_str = rgb_to_hex(rgb)
         self.setStyleSheet(f"background-color: #{color_str};")
+
 
 class AnimationWidget(QFrame):
     def __init__(self, title: str = "Animation"):
@@ -175,6 +176,10 @@ class AnimationWidget(QFrame):
         elif title == "Wipe":
             self.icon.setPixmap(
                 _qta.icon("mdi6.chevron-double-right", color="#FFEE58").pixmap(72, 72)
+            )
+        elif title == "Firework":
+            self.icon.setPixmap(
+                _qta.icon("mdi6.firework", color="#FFEE58").pixmap(72, 72)
             )
         elif title == "Glitter Rainbow":
             self.icon.setPixmap(_qta.icon("mdi6.auto-mode", color="#FFEE58").pixmap(72, 72))

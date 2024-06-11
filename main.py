@@ -71,6 +71,7 @@ ANIMATION_LIST: dict[str, str] = {
     "Fade": "Fade",
     "Flash": "Flash",
     "Wipe": "Wipe",
+    "Firework": "Firework",
     "Random": "Random",
     "Random Color": "RandomColor",
 }
@@ -92,8 +93,9 @@ A_COLORED_LIGHTS_INDEX = 7
 A_FADE_INDEX = 8
 A_FLASH_INDEX = 9
 A_WIPE_INDEX = 10
-A_RANDOM_INDEX = 11
-A_RANDOM_COLOR_INDEX = 12
+A_FIREWORK_INDEX = 11
+A_RANDOM_INDEX = 12
+A_RANDOM_COLOR_INDEX = 13
 
 ANIMATION_CONF_INDEXES: dict[str, int] = {
     "SingleColor": A_SINGLE_COLOR_INDEX,
@@ -106,6 +108,7 @@ ANIMATION_CONF_INDEXES: dict[str, int] = {
     "Fade": A_FADE_INDEX,
     "Flash": A_FLASH_INDEX,
     "Wipe": A_WIPE_INDEX,
+    "Firework": A_FIREWORK_INDEX,
     "Random": A_RANDOM_INDEX,
     "RandomColor": A_RANDOM_COLOR_INDEX,
 }
@@ -189,6 +192,7 @@ class MainWindow(QMainWindow):
         self.brightness_value = 0
         self.brightness_known = BrightnessStates.UNKNOWN
         self.animation_args = AnimationArgs()
+        self.num_leds = 100
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
@@ -772,6 +776,11 @@ class MainWindow(QMainWindow):
         )
         self.anim_wipe_layout.addWidget(self.anim_wipe_speed)
 
+        # Firework
+        self.anim_config_stack.insertWidget(
+            A_FIREWORK_INDEX, generate_animation_config_unavailable()
+        )
+
         # Random / Random Color
         self.anim_config_stack.insertWidget(
             A_RANDOM_INDEX, generate_animation_config_unavailable()
@@ -847,7 +856,6 @@ class MainWindow(QMainWindow):
             "mdi6.application-variable",
             self.generate_gui_config_page(),
         )
-
 
         self.set_cursor()
         if self.settings.fullscreen:
@@ -962,15 +970,15 @@ class MainWindow(QMainWindow):
                 self.animation_args = dict_to_dataclass(
                     json.loads(data["args"]), AnimationArgs
                 )
-                self.anim_single_color_current.setRGB(
+                self.anim_single_color_current.set_rgb(
                     self.animation_args.single_color.color
                 )
-                self.anim_fade_current_a.setRGB(self.animation_args.fade.colora)
-                self.anim_fade_current_b.setRGB(self.animation_args.fade.colorb)
-                self.anim_flash_current_a.setRGB(self.animation_args.flash.colora)
-                self.anim_flash_current_b.setRGB(self.animation_args.flash.colorb)
-                self.anim_wipe_current_a.setRGB(self.animation_args.wipe.colora)
-                self.anim_wipe_current_b.setRGB(self.animation_args.wipe.colorb)
+                self.anim_fade_current_a.set_rgb(self.animation_args.fade.colora)
+                self.anim_fade_current_b.set_rgb(self.animation_args.fade.colorb)
+                self.anim_flash_current_a.set_rgb(self.animation_args.flash.colora)
+                self.anim_flash_current_b.set_rgb(self.animation_args.flash.colorb)
+                self.anim_wipe_current_a.set_rgb(self.animation_args.wipe.colora)
+                self.anim_wipe_current_b.set_rgb(self.animation_args.wipe.colorb)
                 if not self.anim_grainbow_ratio.isSliderDown():
                     self.anim_grainbow_ratio.blockSignals(True)
                     self.anim_grainbow_ratio.setValue(
@@ -982,6 +990,9 @@ class MainWindow(QMainWindow):
                     self.anim_flash_speed.blockSignals(True)
                     self.anim_flash_speed.setValue(self.animation_args.flash.speed)
                     self.anim_flash_speed.blockSignals(False)
+
+            if "num_leds" in data:
+                self.num_leds = data["num_leds"]
 
     def toggle_led_power(self) -> None:
         if self.led_powered == PowerStates.ON:

@@ -42,6 +42,17 @@ class WipeArgs:
 
 
 @dataclass
+class FireworkArgs:
+    num_sparks: int = 60
+    gravity: float = -0.004
+    brightness_decay: float = 0.985
+    flare_min_vel: float = 0.5
+    flare_max_vel: float = 0.9
+    c1: float = 120
+    c2: float = 50
+
+
+@dataclass
 class AnimationArgs:
     """Options for animations"""
 
@@ -50,3 +61,4 @@ class AnimationArgs:
     fade: FadeArgs = field(default_factory=FadeArgs)
     flash: FlashArgs = field(default_factory=FlashArgs)
     wipe: WipeArgs = field(default_factory=WipeArgs)
+    firework: FireworkArgs = field(default_factory=FireworkArgs)
