@@ -34,8 +34,9 @@ from qtpy.QtWidgets import (
     QRadioButton,
     QCheckBox
 )
-from qtpy.QtCore import Qt, QSize, QTimer
+from qtpy.QtCore import Qt, QSize, QTimer, QUrl
 from qtpy.QtGui import QPixmap, QIcon, QFontDatabase, QMouseEvent, QCursor
+from qtpy.QtMultimedia import QSoundEffect
 from qdarktheme import load_stylesheet
 from qtawesome import icon
 from qtawesome import dark as qtadark
@@ -194,6 +195,11 @@ class MainWindow(QMainWindow):
         self.animation_args = AnimationArgs()
         self.num_leds = 100
 
+        # SFX
+        self.sfx = QSoundEffect()
+        self.sfx.setSource(QUrl.fromLocalFile("assets/sounds/click.wav"))
+        self.sfx.setVolume(1)
+
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
 
@@ -330,8 +336,8 @@ class MainWindow(QMainWindow):
 
         self.control_animation_list = []
         for idx, key in enumerate(ANIMATION_LIST.keys()):
-            widget = AnimationWidget(key)
-            widget.mouseReleaseEvent = partial(self.set_animation, key)  # type: ignore
+            widget = AnimationWidget(self.sfx, key)
+            widget.clicked.connect(partial(self.set_animation, key))
             self.control_animation_list.append(widget)
             self.control_animator_layout.addWidget(widget, idx % 2, idx // 2)
 
@@ -1015,7 +1021,7 @@ class MainWindow(QMainWindow):
         )
         self.client.publish(self.settings.brightness_topic, self.control_brightness_slider.value())
 
-    def set_animation(self, anim_name: str, _) -> None:
+    def set_animation(self, anim_name: str) -> None:
         self.animation_sidebar_frame.setEnabled(False)
         self.client.publish(self.settings.animation_topic, ANIMATION_LIST[anim_name])
 

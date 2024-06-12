@@ -1,6 +1,7 @@
 from qtpy.QtWidgets import QFrame, QLabel, QHBoxLayout, QPushButton, QMessageBox, QVBoxLayout
-from qtpy.QtCore import Qt, Signal, QSize, QTimer
+from qtpy.QtCore import Qt, Signal, QSize, QTimer, Slot, QUrl
 from qtpy.QtGui import QMouseEvent, QPainter, QPen, QColor
+from qtpy.QtMultimedia import QSoundEffect
 
 from enum import Enum
 import qtawesome as _qta
@@ -143,8 +144,13 @@ class ColorBlock(QFrame):
 
 
 class AnimationWidget(QFrame):
-    def __init__(self, title: str = "Animation"):
+    clicked = Signal()
+
+    def __init__(self, sfx: QSoundEffect, title: str = "Animation"):
         super().__init__()
+
+        self.sfx = sfx
+
         self.setFrameShape(QFrame.Shape.Box)
         self.setMinimumWidth(160)
 
@@ -193,3 +199,9 @@ class AnimationWidget(QFrame):
         self.title.setObjectName("h4")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.root_layout.addWidget(self.title)
+
+    def mouseReleaseEvent(self, event):
+        self.clicked.emit()
+        self.sfx.setVolume(1)  # Set volume (0.0 to 1.0)
+        self.sfx.play()
+        print("here")
