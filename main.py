@@ -1292,8 +1292,7 @@ class MainWindow(QMainWindow):
             cursor = self.settings.cursor_style
 
         if cursor == CursorSetting.DEFAULT:
-            app.restoreOverrideCursor()
-            app.restoreOverrideCursor()
+            app.setOverrideCursor(QCursor())
         elif cursor == CursorSetting.NONE:
             app.setOverrideCursor(Qt.CursorShape.BlankCursor)
         elif cursor == CursorSetting.BLOB:
