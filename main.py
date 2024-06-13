@@ -261,12 +261,14 @@ class MainWindow(QMainWindow):
         self.control_power.setIconSize(QSize(72, 72))
         self.control_power.setFixedSize(QSize(72, 72))
         self.control_power.clicked.connect(self.toggle_led_power)
+        self.control_power.clicked.connect(self.sfx.play)
 
         self.control_about = QPushButton()
         self.control_about.setFlat(True)
         self.control_about.setIcon(icon("mdi6.information-slab-circle"))
         self.control_about.setIconSize(QSize(24, 24))
         self.control_about.clicked.connect(self.show_about)
+        self.control_about.clicked.connect(self.sfx.play)
         self.control_about.setFixedWidth(self.control_about.minimumSizeHint().height())
 
         self.control_settings = QPushButton()
@@ -274,6 +276,7 @@ class MainWindow(QMainWindow):
         self.control_settings.setIcon(icon("mdi6.cog"))
         self.control_settings.setIconSize(QSize(24, 24))
         self.control_settings.clicked.connect(self.show_settings)
+        self.control_settings.clicked.connect(self.sfx.play)
         self.control_settings.setFixedWidth(
             self.control_settings.minimumSizeHint().height()
         )
@@ -356,6 +359,7 @@ class MainWindow(QMainWindow):
             self.animation_settings.minimumSizeHint().height()
         )
         self.animation_settings.clicked.connect(self.anim_conf)
+        self.animation_settings.clicked.connect(self.sfx.play)
         self.animation_settings.setFlat(True)
         self.animation_sidebar_layout.addWidget(self.animation_settings)
 
@@ -481,7 +485,7 @@ class MainWindow(QMainWindow):
         self.anim_single_color_layout = QHBoxLayout()
         self.anim_single_color_widget.setLayout(self.anim_single_color_layout)
 
-        self.anim_single_color_palette = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_single_color_palette = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_single_color_palette.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic,
@@ -575,7 +579,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_a_layout = QVBoxLayout()
         self.anim_fade_layout.addLayout(self.anim_fade_a_layout)
 
-        self.anim_fade_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_a = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_fade_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'fade,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
@@ -605,7 +609,7 @@ class MainWindow(QMainWindow):
         self.anim_fade_b_layout = QVBoxLayout()
         self.anim_fade_layout.addLayout(self.anim_fade_b_layout)
 
-        self.anim_fade_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_fade_palette_b = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_fade_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'fade,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
@@ -638,7 +642,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_a_layout = QVBoxLayout()
         self.anim_flash_layout.addLayout(self.anim_flash_a_layout)
 
-        self.anim_flash_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_a = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_flash_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'flash,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
@@ -668,7 +672,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_b_layout = QVBoxLayout()
         self.anim_flash_layout.addLayout(self.anim_flash_b_layout)
 
-        self.anim_flash_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_flash_palette_b = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_flash_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'flash,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
@@ -715,7 +719,7 @@ class MainWindow(QMainWindow):
         self.anim_wipe_a_layout = QVBoxLayout()
         self.anim_wipe_layout.addLayout(self.anim_wipe_a_layout)
 
-        self.anim_wipe_palette_a = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_wipe_palette_a = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_wipe_palette_a.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'wipe,{{"colora": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"
@@ -745,7 +749,7 @@ class MainWindow(QMainWindow):
         self.anim_wipe_b_layout = QVBoxLayout()
         self.anim_wipe_layout.addLayout(self.anim_wipe_b_layout)
 
-        self.anim_wipe_palette_b = PaletteGrid(PALETTES["kevinbot"], size=56)
+        self.anim_wipe_palette_b = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
         self.anim_wipe_palette_b.selected.connect(
             lambda c: self.publish_and_update_args(
                 self.settings.args_topic, f'wipe,{{"colorb": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}"

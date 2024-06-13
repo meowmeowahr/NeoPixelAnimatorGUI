@@ -148,7 +148,7 @@ class PaletteVertical(_PaletteLinearBase):
 
 class PaletteGrid(_PaletteBase):
 
-    def __init__(self, colors, n_columns=7, size=42, *args, **kwargs):
+    def __init__(self, colors, sfx, n_columns=7, size=42, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         if isinstance(colors, str):
@@ -162,6 +162,7 @@ class PaletteGrid(_PaletteBase):
             b = _PaletteButton(c)
             b.setFixedSize(size, size)
             b.pressed.connect(functools.partial(self._emit_color, c))
+            b.pressed.connect(sfx.play)
             palette.addWidget(b, row, col)
             col += 1
             if col == n_columns:

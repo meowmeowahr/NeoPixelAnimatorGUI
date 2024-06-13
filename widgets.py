@@ -149,7 +149,7 @@ class AnimationWidget(QFrame):
     def __init__(self, sfx: QSoundEffect, title: str = "Animation"):
         super().__init__()
 
-        self.sfx = sfx
+        self.sfx: QSoundEffect = sfx
 
         self.setFrameShape(QFrame.Shape.Box)
         self.setMinimumWidth(160)
@@ -202,6 +202,4 @@ class AnimationWidget(QFrame):
 
     def mouseReleaseEvent(self, event):
         self.clicked.emit()
-        self.sfx.setVolume(1)  # Set volume (0.0 to 1.0)
         self.sfx.play()
-        print("here")
