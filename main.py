@@ -198,7 +198,7 @@ class MainWindow(QMainWindow):
         # SFX
         self.sfx = QSoundEffect()
         self.sfx.setSource(QUrl.fromLocalFile("assets/sounds/click.wav"))
-        self.sfx.setVolume(1)
+        self.sfx.setVolume(self.settings.sfx_volume)
 
         self.setWindowTitle("NeoPixel Animator Client")
         self.setWindowIcon(QIcon("assets/icons/icon-128.svg"))
@@ -308,6 +308,7 @@ class MainWindow(QMainWindow):
         self.control_brightness_layout.addWidget(self.control_brightness_warning)
 
         self.control_brightness_slider = QSlider(Qt.Orientation.Horizontal)
+        self.control_brightness_slider.setObjectName("big_slider")
         self.control_brightness_slider.setRange(1, 255)
         self.control_brightness_slider.valueChanged.connect(self.update_brightness)
         self.control_brightness_layout.addWidget(self.control_brightness_slider)
@@ -532,6 +533,7 @@ class MainWindow(QMainWindow):
         self.anim_grainbow_layout.addWidget(self.anim_grainbow_ratio_label)
 
         self.anim_grainbow_ratio = QSlider(Qt.Orientation.Horizontal)
+        self.anim_grainbow_ratio.setObjectName("big_slider")
         self.anim_grainbow_ratio.setRange(1, 50)
         self.anim_grainbow_ratio.valueChanged.connect(
             lambda: self.publish_and_update_args(
@@ -696,6 +698,7 @@ class MainWindow(QMainWindow):
         self.anim_flash_b_bottom_layout.addStretch()
 
         self.anim_flash_speed = QSlider()
+        self.anim_flash_speed.setObjectName("big_slider")
         self.anim_flash_speed.setRange(3, 50)
         self.anim_flash_speed.valueChanged.connect(
             lambda: self.publish_and_update_args(
@@ -773,6 +776,7 @@ class MainWindow(QMainWindow):
         self.anim_wipe_b_bottom_layout.addStretch()
 
         self.anim_wipe_speed = QSlider()
+        self.anim_wipe_speed.setObjectName("big_slider")
         self.anim_wipe_speed.setRange(1, 5)
         self.anim_wipe_speed.valueChanged.connect(
             lambda: self.publish_and_update_args(
@@ -1273,6 +1277,18 @@ class MainWindow(QMainWindow):
         fullscreen_check.clicked.connect(self.set_fullscreen)
         check_grid.addWidget(fullscreen_check, 2, 1)
 
+        sfx_vol_layout = QHBoxLayout()
+        layout.addLayout(sfx_vol_layout)
+
+        sfx_volume_label = QLabel("Click volume:")
+        sfx_vol_layout.addWidget(sfx_volume_label)
+
+        sfx_volume = QSlider(Qt.Orientation.Horizontal)
+        sfx_volume.setRange(0, 100)
+        sfx_volume.setValue(self.settings.sfx_volume)
+        sfx_volume.valueChanged.connect(self.set_sfx_volume)
+        sfx_vol_layout.addWidget(sfx_volume)
+
         return frame
 
     def lock_settings(self):
@@ -1343,6 +1359,10 @@ class MainWindow(QMainWindow):
                 self.showNormal()
                 return
             self.show()
+
+    def set_sfx_volume(self, volume: int):
+        self.sfx.setVolume(volume / 100)
+        self.settings.sfx_volume = volume / 100
 
     def restart(self):
         self.deleteLater()

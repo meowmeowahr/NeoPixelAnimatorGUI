@@ -223,3 +223,16 @@ class SettingsManager:
 
     def set_fullscreen(self, new_value: bool):
         self.fullscreen = new_value
+
+    @property
+    def sfx_volume(self) -> float:
+        value = self.qsettings.value("app/sfx_volume", 0.5, float)  # type: ignore
+        return value  # type: ignore
+
+    @sfx_volume.setter
+    def sfx_volume(self, new_value: float):
+        self.qsettings.setValue("app/sfx_volume", new_value)
+        logger.info(f"Set value of app/sfx_volume to {new_value}")
+
+    def set_sfx_volume(self, new_value: float):
+        self.sfx_volume = new_value
