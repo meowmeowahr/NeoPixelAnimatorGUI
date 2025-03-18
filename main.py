@@ -796,9 +796,38 @@ class MainWindow(QMainWindow):
         )
 
         # Random / Random Color
+        self.anim_random_widget = QWidget()
         self.anim_config_stack.insertWidget(
-            A_RANDOM_INDEX, generate_animation_config_unavailable()
+            A_RANDOM_INDEX, self.anim_random_widget
         )
+
+        self.anim_random_layout = QHBoxLayout()
+        self.anim_random_widget.setLayout(self.anim_random_layout)
+
+        self.anim_random_palette = PaletteGrid(PALETTES["kevinbot"], self.sfx, size=56)
+        self.anim_random_palette.selected.connect(
+            lambda c: self.publish_and_update_args(
+                self.settings.args_topic,
+                f'random,{{"color": ' f"{list(hex_to_rgb(c.lstrip('#')))}}}",
+            )
+        )
+        self.anim_random_layout.addWidget(self.anim_random_palette)
+
+        self.anim_random_right_layout = QVBoxLayout()
+        self.anim_random_layout.addLayout(self.anim_random_right_layout)
+
+        self.anim_random_right_layout.addStretch()
+
+        self.anim_random_current_label = QLabel("Current")
+        self.anim_random_current_label.setObjectName("h2")
+        self.anim_random_right_layout.addWidget(
+            self.anim_random_current_label
+        )
+
+        self.anim_random_current = ColorBlock()
+        self.anim_random_right_layout.addWidget(self.anim_random_current)
+
+        self.anim_random_right_layout.addStretch()
 
         self.anim_config_stack.insertWidget(
             A_RANDOM_COLOR_INDEX, generate_animation_config_unavailable()
@@ -821,6 +850,7 @@ class MainWindow(QMainWindow):
         self.settings_back.clicked.connect(
             lambda: self.root_widget.setCurrentIndex(M_CONTROL_WIDGET_INDEX)
         )
+        self.settings_back.clicked.connect(self.sfx.play)
 
         self.settings_restart = QPushButton()
         self.settings_restart.setFlat(True)
@@ -987,6 +1017,9 @@ class MainWindow(QMainWindow):
                 self.anim_single_color_current.set_rgb(
                     self.animation_args.single_color.color
                 )
+                self.anim_random_current.set_rgb(
+                    self.animation_args.random.color
+                )
                 self.anim_fade_current_a.set_rgb(self.animation_args.fade.colora)
                 self.anim_fade_current_b.set_rgb(self.animation_args.fade.colorb)
                 self.anim_flash_current_a.set_rgb(self.animation_args.flash.colora)
@@ -1069,6 +1102,7 @@ class MainWindow(QMainWindow):
 
         self.settings_pages.insertWidget(i, content)
         button.clicked.connect(lambda: self.settings_pages.setCurrentIndex(i))
+        button.clicked.connect(self.sfx.play)
 
     def generate_mqtt_server_config_page(self):
         frame = QFrame()
@@ -1285,7 +1319,7 @@ class MainWindow(QMainWindow):
 
         sfx_volume = QSlider(Qt.Orientation.Horizontal)
         sfx_volume.setRange(0, 100)
-        sfx_volume.setValue(self.settings.sfx_volume)
+        sfx_volume.setValue(int(self.settings.sfx_volume * 100))
         sfx_volume.valueChanged.connect(self.set_sfx_volume)
         sfx_vol_layout.addWidget(sfx_volume)
 
